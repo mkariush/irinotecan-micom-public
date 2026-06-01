@@ -2,6 +2,7 @@
 
 import os
 import pandas as pd
+import micom
 from micom.workflows import grow
 from micom.qiime_formats import load_qiime_medium
 
@@ -10,7 +11,6 @@ MODELS_DIR    = "data/processed/models"
 GROWTH_DIR    = "data/processed/growth"
 TRADEOFF      = 0.5
 THREADS       = 4
-SOLVER        = "glpk"
 
 if __name__ == "__main__":
     os.makedirs(GROWTH_DIR, exist_ok=True)
@@ -18,13 +18,20 @@ if __name__ == "__main__":
     manifest = pd.read_csv(MANIFEST_PATH)
     print(f"Growing {len(manifest)} community models")
 
-    # Load MICOM built-in western diet gut medium
-    medium = load_qiime_medium("western_diet_gut")
+    # Load MICOM built-in gut medium (bundled with package)
+    medium_path = os.path.join(os.path.dirname(micom.__file__), "data", "artifacts", "medium.qza")
+    medium = load_qiime_medium(medium_path)
 
-    # Add SN-38G to medium so bacteria can deconjugate it.
-    # Flux = 1.0 mmol/gDW/h (saturating) measures community reactivation CAPACITY,
-    # not absolute flux at a specific dose.
-    medium["EX_sn38g(e)"] = 1.0
+    # Add SN-38G at de facto unlimited rate (1,000 mmol/gDW/h) to measure
+    # community reactivation CAPACITY — consistent with Heinken et al. 2023.
+    # Medium uses _m suffix convention for exchange reactions.
+    sn38g_row = pd.DataFrame(
+        [{"reaction": "EX_sn38g_m", "flux": 1000.0, "metabolite": "sn38g_m"}],
+        index=["EX_sn38g_m"]
+    )
+    medium = pd.concat([medium, sn38g_row])
+
+    print(f"Medium reactions: {len(medium)} (includes SN-38G)")
 
     results = grow(
         manifest,
@@ -32,7 +39,6 @@ if __name__ == "__main__":
         medium=medium,
         tradeoff=TRADEOFF,
         threads=THREADS,
-        solver=SOLVER,
     )
 
     results.growth_rates.to_parquet(os.path.join(GROWTH_DIR, "growth_rates.parquet"))

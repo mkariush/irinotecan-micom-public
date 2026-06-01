@@ -5,7 +5,7 @@ import pandas as pd
 from micom.workflows import build
 
 TAXONOMY_PATH  = "data/processed/taxonomy_micom.parquet"
-AGORA2_MANIFEST = r"databases\AGORA2_SBML"
+AGORA2_MANIFEST = r"databases\AGORA2_json"
 MODELS_DIR     = "data/processed/models"
 CUTOFF         = 0.001
 THREADS        = 4
