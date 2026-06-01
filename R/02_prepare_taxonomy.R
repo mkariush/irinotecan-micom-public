@@ -36,14 +36,20 @@ prepare_micom_table <- function(cohort, cutoff = ABUND_CUTOFF) {
     dplyr::mutate(abundance = abundance / sum(abundance)) |>
     dplyr::ungroup()
 
-  # Strip MetaPhlAn prefix (e.g. "s__Bacteroides_fragilis" -> "Bacteroides fragilis")
-  # AGORA2 uses "Genus species" format — verify against manifest before running 03_build_models.py
+  # curatedMetagenomicData column names use MetaPhlAn format:
+  # "k__Bacteria|p__Firmicutes|...|s__Bacteroides_fragilis"
+  # Extract species name (after |s__) and convert underscores to spaces.
   long <- long |>
-    dplyr::mutate(taxon = str_remove(taxon, "^[a-z]__"),
-                  taxon = str_replace_all(taxon, "_", " "))
+    dplyr::mutate(
+      taxon = stringr::str_extract(taxon, "(?<=\\|s__)[^|]+$"),
+      taxon = stringr::str_replace_all(taxon, "_", " ")
+    ) |>
+    dplyr::filter(!is.na(taxon))
 
+  # Join all metadata columns (drop cohort from meta — already in long from abund)
+  meta_cols <- dplyr::select(meta, -dplyr::any_of("cohort"))
   long |>
-    dplyr::left_join(dplyr::select(meta, sample_id, study_condition), by = "sample_id") |>
+    dplyr::left_join(meta_cols, by = "sample_id") |>
     dplyr::rename(id = taxon)
 }
 

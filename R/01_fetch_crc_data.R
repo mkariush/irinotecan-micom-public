@@ -40,7 +40,6 @@ for (cohort in COHORTS) {
 
   meta_df <- res$metadata |>
     rownames_to_column("sample_id") |>
-    select(any_of(c("sample_id", "study_condition", "age", "gender", "BMI", "country"))) |>
     mutate(cohort = cohort)
 
   write_parquet(abund_df, file.path(OUT_DIR, paste0(cohort, "_abundance.parquet")))

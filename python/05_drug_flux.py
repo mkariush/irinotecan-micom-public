@@ -9,72 +9,53 @@ MODELS_DIR  = "data/processed/models"
 GROWTH_DIR  = "data/processed/growth"
 FLUX_DIR    = "data/processed/flux"
 
-# Beta-glucuronidase identifiers to search for in AGORA2 models
-BGUC_KEYWORDS = ["GUR", "BGUC", "GLUCUR", "glucuronid"]
-BGUC_EC       = "3.2.1.31"
-SN38G_METABOLITE_PATTERNS = ["sn38g", "SN38G", "cpd17595"]  # adjust if AGORA2 uses different IDs
+# Confirmed AGORA2 reaction and metabolite IDs (from JSON models)
+BGUC_REACTIONS = {"SN38G_GLCAASE", "SN38G_GLCAASEe", "SN38G_GLCAASEepp"}
+SN38_EXCHANGE  = "EX_sn38(e)"   # community SN-38 production flux
+SN38G_EXCHANGE = "EX_sn38g(e)"  # SN-38G uptake flux
 
 os.makedirs(FLUX_DIR, exist_ok=True)
 
 
-def find_bguc_reactions(model: cobra.Model) -> list:
-    hits = []
-    for r in model.reactions:
-        id_hit  = any(kw.lower() in r.id.lower() for kw in BGUC_KEYWORDS)
-        ec_hit  = BGUC_EC in (r.annotation.get("ec-code", "") or "")
-        met_hit = any(
-            any(p.lower() in m.id.lower() for p in SN38G_METABOLITE_PATTERNS)
-            for m in r.metabolites
-        )
-        if id_hit or ec_hit or met_hit:
-            hits.append(r)
-    return hits
-
-
-def check_agora2_coverage(n_models: int = 10) -> pd.DataFrame:
-    """Screen a sample of AGORA2 single-organism models for bGUC activity."""
-    model_files = glob.glob(os.path.join(MODELS_DIR, "**/*.xml"), recursive=True)
-    if not model_files:
-        model_files = glob.glob(os.path.join(MODELS_DIR, "**/*.json"), recursive=True)
-
+def check_bguc_coverage(n_models: int = 20) -> pd.DataFrame:
+    """Screen community models for SN38G_GLCAASE reaction coverage."""
+    model_files = glob.glob(os.path.join(MODELS_DIR, "*.pickle"))
     records = []
     for path in model_files[:n_models]:
-        model = cobra.io.read_sbml_model(path)
-        rxns  = find_bguc_reactions(model)
-        records.append({
-            "model":    os.path.basename(path),
-            "n_bguc":   len(rxns),
-            "rxn_ids":  [r.id for r in rxns],
-        })
+        from micom.util import load_pickle
+        com = load_pickle(path)
+        rxn_ids = {r.id.split("__")[0] for r in com.reactions}
+        has_bguc = bool(rxn_ids & BGUC_REACTIONS)
+        records.append({"model": os.path.basename(path), "has_bguc": has_bguc})
     return pd.DataFrame(records)
 
 
 def extract_sn38_flux(exchange_fluxes: pd.DataFrame) -> pd.DataFrame:
-    """Pull SN-38 exchange flux from grow() output."""
-    sn38_cols = [c for c in exchange_fluxes.columns
-                 if any(p.lower() in c.lower() for p in SN38G_METABOLITE_PATTERNS)]
-    if not sn38_cols:
+    """Extract community SN-38 production flux (EX_sn38(e)) from grow() output."""
+    if SN38_EXCHANGE not in exchange_fluxes.columns:
+        available = [c for c in exchange_fluxes.columns if "sn38" in c.lower()]
         raise ValueError(
-            "No SN-38G columns found in exchange_fluxes. "
-            "Either AGORA2 lacks the reaction (run check_agora2_coverage) or "
-            "the metabolite ID pattern needs updating."
+            f"Column '{SN38_EXCHANGE}' not found in exchange_fluxes.\n"
+            f"Columns containing 'sn38': {available}\n"
+            "Ensure EX_sn38g(e) was added to the medium in 04_grow.py."
         )
-    return exchange_fluxes[["sample_id"] + sn38_cols]
+    return exchange_fluxes[["sample_id", SN38_EXCHANGE]].rename(
+        columns={SN38_EXCHANGE: "sn38_flux"}
+    )
 
 
 if __name__ == "__main__":
-    print("=== Checking AGORA2 beta-glucuronidase coverage ===")
-    coverage = check_agora2_coverage(n_models=20)
-    print(coverage.to_string())
-    print(f"\nModels with bGUC activity: {(coverage['n_bguc'] > 0).sum()} / {len(coverage)}")
-    coverage.to_csv(os.path.join(FLUX_DIR, "bguc_coverage.csv"), index=False)
+    os.makedirs(FLUX_DIR, exist_ok=True)
 
-    if (coverage["n_bguc"] > 0).sum() == 0:
-        print("\nWARNING: No bGUC reactions found. Manual COBRApy addition required.")
-        print("See: https://cobrapy.readthedocs.io — add EC 3.2.1.31 reaction to relevant models")
-    else:
-        print("\n=== Extracting SN-38 flux from growth results ===")
-        exchange_fluxes = pd.read_parquet(os.path.join(GROWTH_DIR, "exchange_fluxes.parquet"))
-        sn38_flux = extract_sn38_flux(exchange_fluxes)
-        sn38_flux.to_parquet(os.path.join(FLUX_DIR, "sn38_flux.parquet"))
-        print(f"SN-38 flux extracted for {sn38_flux['sample_id'].nunique()} samples")
+    print("=== Extracting SN-38 reactivation flux ===")
+    exchange_fluxes = pd.read_parquet(os.path.join(GROWTH_DIR, "exchange_fluxes.parquet"))
+
+    print(f"Exchange flux columns containing 'sn38': "
+          f"{[c for c in exchange_fluxes.columns if 'sn38' in c.lower()]}")
+
+    sn38_flux = extract_sn38_flux(exchange_fluxes)
+    sn38_flux.to_parquet(os.path.join(FLUX_DIR, "sn38_flux.parquet"))
+
+    print(f"SN-38 flux extracted for {sn38_flux['sample_id'].nunique()} samples")
+    print(f"Median flux: {sn38_flux['sn38_flux'].median():.6f} mmol/gDW/h")
+    print(f"Samples with non-zero flux: {(sn38_flux['sn38_flux'] > 0).sum()}")
