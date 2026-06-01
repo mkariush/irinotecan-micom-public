@@ -9,7 +9,9 @@ AGORA2_MANIFEST = r"databases\AGORA2_json"
 MODELS_DIR     = "data/processed/models"
 CUTOFF         = 0.001
 THREADS        = 4
-SOLVER         = "glpk"
+SOLVER         = "hybrid"   # QP-capable open-source solver (HiGHS + OSQP).
+                            # Required for MICOM cooperative tradeoff; GLPK is LP-only.
+                            # Switch to "gurobi" for the full production run once licensed.
 
 # For testing, restrict to a small subset before full run
 TEST_COHORT    = "ZellerG_2014"   # set to e.g. "ZellerG_2014" to limit scope

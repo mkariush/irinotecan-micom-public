@@ -4,6 +4,12 @@ data/processed/*
 !data/processed/.gitkeep
 !data/raw/knownDrugMetabolizers.xlsx
 
+# PDFs (copyright/large) and literature working files
+pdfs/
+pdf_extracts.json
+extract_err.log
+*.webp
+
 ~$*
 
 *.json.gz

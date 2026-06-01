@@ -1,61 +1,122 @@
-"""Extract SN-38 reactivation flux; add beta-glucuronidase reaction if absent from AGORA2."""
+"""Compute per-sample SN-38 reactivation CAPACITY from community models.
+
+Two arms (see CLAUDE.md "Comparison with Heinken"):
+  Arm A (Heinken replication): pure FBA max secretion of EX_sn38_m, with
+    precursor SN-38G AND oxygen supplied unlimited (1000), NO growth constraint.
+    Purpose: benchmark/validation against Heinken et al. 2023.
+  Arm B (our contribution): max EX_sn38_m subject to the community holding its
+    cooperative-tradeoff growth solution, under realistic ANAEROBIC western-diet
+    conditions (no O2 flood). Purpose: reactivation in a functioning community.
+
+Key finding motivating this design: plain grow() returns zero SN-38 flux because
+reactivation is not growth-coupled -- the solver has no incentive to route flux
+through beta-glucuronidase. Capacity must be optimized for explicitly.
+"""
 
 import os
 import glob
 import pandas as pd
-import cobra
+from micom.util import load_pickle
+from micom.qiime_formats import load_qiime_medium
 
 MODELS_DIR  = "data/processed/models"
-GROWTH_DIR  = "data/processed/growth"
+MEDIUM_PATH = "data/media/western_diet_gut_agora.qza"
 FLUX_DIR    = "data/processed/flux"
 
-# Confirmed AGORA2 reaction and metabolite IDs (from JSON models)
-BGUC_REACTIONS = {"SN38G_GLCAASE", "SN38G_GLCAASEe", "SN38G_GLCAASEepp"}
-SN38_EXCHANGE  = "EX_sn38(e)"   # community SN-38 production flux
-SN38G_EXCHANGE = "EX_sn38g(e)"  # SN-38G uptake flux
+SN38_EXCHANGE   = "EX_sn38_m"    # secreted toxic SN-38 (the readout)
+SN38G_EXCHANGE  = "EX_sn38g_m"   # SN-38G precursor supply
+O2_EXCHANGE     = "EX_o2_m"
+UNLIMITED       = 1000.0
+TRADEOFF        = 0.5
+GROWTH_FRACTION = 0.95           # Arm B: hold community growth >= 95% of tradeoff max
 
-os.makedirs(FLUX_DIR, exist_ok=True)
-
-
-def check_bguc_coverage(n_models: int = 20) -> pd.DataFrame:
-    """Screen community models for SN38G_GLCAASE reaction coverage."""
-    model_files = glob.glob(os.path.join(MODELS_DIR, "*.pickle"))
-    records = []
-    for path in model_files[:n_models]:
-        from micom.util import load_pickle
-        com = load_pickle(path)
-        rxn_ids = {r.id.split("__")[0] for r in com.reactions}
-        has_bguc = bool(rxn_ids & BGUC_REACTIONS)
-        records.append({"model": os.path.basename(path), "has_bguc": has_bguc})
-    return pd.DataFrame(records)
+# Test scope (match 03/04). Set to None for the full run.
+TEST_N_MODELS = None
 
 
-def extract_sn38_flux(exchange_fluxes: pd.DataFrame) -> pd.DataFrame:
-    """Extract community SN-38 production flux (EX_sn38(e)) from grow() output."""
-    if SN38_EXCHANGE not in exchange_fluxes.columns:
-        available = [c for c in exchange_fluxes.columns if "sn38" in c.lower()]
-        raise ValueError(
-            f"Column '{SN38_EXCHANGE}' not found in exchange_fluxes.\n"
-            f"Columns containing 'sn38': {available}\n"
-            "Ensure EX_sn38g(e) was added to the medium in 04_grow.py."
-        )
-    return exchange_fluxes[["sample_id", SN38_EXCHANGE]].rename(
-        columns={SN38_EXCHANGE: "sn38_flux"}
-    )
+def _apply_medium(com, base_medium: dict, anaerobic: bool):
+    """Set the community medium from a {reaction: flux} dict, keeping only
+    exchanges that exist in this model. Supplies SN-38G; floods O2 unless anaerobic."""
+    med = dict(base_medium)
+    med[SN38G_EXCHANGE] = UNLIMITED
+    if not anaerobic:
+        med[O2_EXCHANGE] = UNLIMITED
+    have = {r.id for r in com.exchanges}
+    com.medium = {r: f for r, f in med.items() if r in have}
+
+
+def arm_b_growth_constrained(com, base_medium) -> float:
+    """Max SN-38 secretion while community holds its cooperative-tradeoff growth.
+    NOTE: cobra's context manager does NOT roll back optlang variable-bound changes,
+    so community_objective.lb is set/reset EXPLICITLY (verified 2026-06-01)."""
+    with com:
+        _apply_medium(com, base_medium, anaerobic=True)
+        sol = com.cooperative_tradeoff(fraction=TRADEOFF)
+        gr = sol.growth_rate
+        com.objective = com.reactions.get_by_id(SN38_EXCHANGE)
+        com.variables.community_objective.lb = GROWTH_FRACTION * gr
+        s = com.optimize()
+        flux = float(s.objective_value) if s is not None else 0.0
+        contribs = _gus_contributions(com)
+        com.variables.community_objective.lb = 0.0   # explicit reset (not auto-rolled back)
+    return gr, flux, contribs
+
+
+def arm_a_heinken(com, base_medium) -> float:
+    """Pure FBA max SN-38 secretion, precursor + O2 unlimited, NO growth constraint."""
+    with com:
+        _apply_medium(com, base_medium, anaerobic=False)
+        com.variables.community_objective.lb = 0.0   # explicit: ensure truly unconstrained
+        com.objective = com.reactions.get_by_id(SN38_EXCHANGE)
+        s = com.optimize()
+        flux = float(s.objective_value) if s is not None else 0.0
+        com.variables.community_objective.lb = 0.0
+        return flux
+
+
+def _gus_contributions(com) -> dict:
+    """Per-taxon flux through SN38G_GLCAASE* reactions in the current solution."""
+    out = {}
+    for r in com.reactions:
+        if "SN38G_GLCAASE" in r.id:
+            taxon = r.id.split("__")[-1]
+            out[taxon] = out.get(taxon, 0.0) + abs(r.flux)
+    return {k: v for k, v in out.items() if v > 1e-9}
 
 
 if __name__ == "__main__":
     os.makedirs(FLUX_DIR, exist_ok=True)
+    base_medium = dict(zip(*[load_qiime_medium(MEDIUM_PATH)[c] for c in ("reaction", "flux")]))
 
-    print("=== Extracting SN-38 reactivation flux ===")
-    exchange_fluxes = pd.read_parquet(os.path.join(GROWTH_DIR, "exchange_fluxes.parquet"))
+    model_files = sorted(glob.glob(os.path.join(MODELS_DIR, "*.pickle")))
+    if TEST_N_MODELS:
+        model_files = model_files[:TEST_N_MODELS]
+    print(f"Computing SN-38 capacity for {len(model_files)} samples (Arms A + B)")
 
-    print(f"Exchange flux columns containing 'sn38': "
-          f"{[c for c in exchange_fluxes.columns if 'sn38' in c.lower()]}")
+    cap_rows, contrib_rows = [], []
+    for i, path in enumerate(model_files, 1):
+        sample = os.path.basename(path).replace(".pickle", "")
+        com = load_pickle(path)
+        gr, flux_b, contribs = arm_b_growth_constrained(com, base_medium)
+        flux_a = arm_a_heinken(com, base_medium)
+        cap_rows.append({
+            "sample_id": sample,
+            "growth_rate": gr,
+            "sn38_capacity_constrained": flux_b,   # Arm B (primary)
+            "sn38_capacity_unconstrained": flux_a, # Arm A (Heinken)
+        })
+        for taxon, f in contribs.items():
+            contrib_rows.append({"sample_id": sample, "taxon": taxon, "gus_flux": f})
+        print(f"  [{i}/{len(model_files)}] {sample}: "
+              f"B={flux_b:.3f}  A={flux_a:.3f}  growth={gr:.4f}  GUS taxa={len(contribs)}")
 
-    sn38_flux = extract_sn38_flux(exchange_fluxes)
-    sn38_flux.to_parquet(os.path.join(FLUX_DIR, "sn38_flux.parquet"))
+    cap = pd.DataFrame(cap_rows)
+    contrib = pd.DataFrame(contrib_rows)
+    cap.to_parquet(os.path.join(FLUX_DIR, "sn38_capacity.parquet"))
+    contrib.to_parquet(os.path.join(FLUX_DIR, "sn38_taxa_contributions.parquet"))
 
-    print(f"SN-38 flux extracted for {sn38_flux['sample_id'].nunique()} samples")
-    print(f"Median flux: {sn38_flux['sn38_flux'].median():.6f} mmol/gDW/h")
-    print(f"Samples with non-zero flux: {(sn38_flux['sn38_flux'] > 0).sum()}")
+    print("\n=== SN-38 reactivation capacity ===")
+    print(f"Arm B (constrained)   median: {cap['sn38_capacity_constrained'].median():.3f}")
+    print(f"Arm A (unconstrained) median: {cap['sn38_capacity_unconstrained'].median():.3f}")
+    print(f"Samples with non-zero Arm B: {(cap['sn38_capacity_constrained'] > 0).sum()}/{len(cap)}")
+    print(f"Results -> {FLUX_DIR}")

@@ -18,8 +18,10 @@ if __name__ == "__main__":
     manifest = pd.read_csv(MANIFEST_PATH)
     print(f"Growing {len(manifest)} community models")
 
-    # Load MICOM built-in gut medium (bundled with package)
-    medium_path = os.path.join(os.path.dirname(micom.__file__), "data", "artifacts", "medium.qza")
+    # Load AGORA-matched western diet gut medium (171 metabolites).
+    # NOTE: the package-bundled medium.qza is a 4-metabolite demo and yields
+    # zero growth — do not use it. This file is from github.com/micom-dev/media.
+    medium_path = "data/media/western_diet_gut_agora.qza"
     medium = load_qiime_medium(medium_path)
 
     # Add SN-38G at de facto unlimited rate (1,000 mmol/gDW/h) to measure
@@ -39,10 +41,13 @@ if __name__ == "__main__":
         medium=medium,
         tradeoff=TRADEOFF,
         threads=THREADS,
+        presolve=True,   # recovers samples that fail cooperative tradeoff on hybrid/OSQP
     )
 
+    # GrowthResults fields are: growth_rates, exchanges, annotations.
+    # `exchanges` holds the per-taxon exchange fluxes incl. SN-38 reactivation.
     results.growth_rates.to_parquet(os.path.join(GROWTH_DIR, "growth_rates.parquet"))
-    results.exchange_fluxes.to_parquet(os.path.join(GROWTH_DIR, "exchange_fluxes.parquet"))
+    results.exchanges.to_parquet(os.path.join(GROWTH_DIR, "exchange_fluxes.parquet"))
 
     print(f"Growth simulation complete. Results written to {GROWTH_DIR}")
     print(f"  Samples: {results.growth_rates['sample_id'].nunique()}")
