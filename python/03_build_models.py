@@ -13,11 +13,14 @@ SOLVER         = "hybrid"   # QP-capable open-source solver (HiGHS + OSQP).
                             # Required for MICOM cooperative tradeoff; GLPK is LP-only.
                             # Switch to "gurobi" for the full production run once licensed.
 
-# For testing, restrict to a small subset before full run
-TEST_COHORT    = "YuJ_2015"   # set to None for all cohorts
-TEST_N_SAMPLES = 10           # set to None for all samples in cohort
-TEST_STRATIFY  = True         # if True, balance TEST_N_SAMPLES across study_condition
-                              # (e.g. 5 CRC + 5 control) so CRC-vs-healthy is testable
+# For testing, restrict to a small subset before full run.
+# Overridable by env vars so the full overnight run doesn't edit this file:
+#   MICOM_TEST_COHORT=None  MICOM_TEST_N=None   -> full 6-cohort run
+TEST_COHORT    = os.environ.get("MICOM_TEST_COHORT", "YuJ_2015")
+TEST_COHORT    = None if TEST_COHORT in ("", "None") else TEST_COHORT
+_n             = os.environ.get("MICOM_TEST_N", "10")
+TEST_N_SAMPLES = None if _n in ("", "None") else int(_n)
+TEST_STRATIFY  = True         # balance TEST_N_SAMPLES across study_condition when subsetting
 
 if __name__ == "__main__":
     if not os.path.exists(AGORA2_MANIFEST):
