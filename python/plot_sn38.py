@@ -58,13 +58,20 @@ def fig1_capacity_by_condition(cap):
     })
     plt.figure(figsize=(10, 7))
     ax = sns.violinplot(data=long, x="group", y="flux", hue="arm",
-                        split=False, inner="quart", cut=0)
+                        split=False, inner=None, cut=0)
+    # make violin bodies semi-transparent so individual points show through
+    for coll in ax.collections:
+        coll.set_alpha(0.35)
+    # individual sample points on top, dodged to match each violin
     sns.stripplot(data=long, x="group", y="flux", hue="arm",
-                  dodge=True, size=4, alpha=0.5, ax=ax, legend=False)
+                  dodge=True, jitter=0.08, size=9, alpha=0.95,
+                  edgecolor="black", linewidth=0.8, ax=ax, legend=False)
     ax.set_ylabel("SN-38 reactivation flux\n(mmol / gDW / h)")
     ax.set_xlabel("")
     ax.set_title("SN-38 reactivation capacity: theoretical vs realized")
-    plt.legend(title="", loc="upper right", fontsize=10)
+    # keep only the two violin (arm) legend entries, drop duplicates from stripplot
+    handles, labels = ax.get_legend_handles_labels()
+    ax.legend(handles[:2], labels[:2], title="", loc="upper right", fontsize=10)
     plt.tight_layout()
     plt.savefig(os.path.join(FIG_DIR, "fig1_capacity_by_condition.png"), dpi=200)
     plt.close()
