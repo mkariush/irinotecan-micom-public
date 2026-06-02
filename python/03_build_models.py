@@ -14,8 +14,10 @@ SOLVER         = "hybrid"   # QP-capable open-source solver (HiGHS + OSQP).
                             # Switch to "gurobi" for the full production run once licensed.
 
 # For testing, restrict to a small subset before full run
-TEST_COHORT    = "ZellerG_2014"   # set to e.g. "ZellerG_2014" to limit scope
-TEST_N_SAMPLES = 5   # set to e.g. 10 to limit to first N samples
+TEST_COHORT    = "YuJ_2015"   # set to None for all cohorts
+TEST_N_SAMPLES = 10           # set to None for all samples in cohort
+TEST_STRATIFY  = True         # if True, balance TEST_N_SAMPLES across study_condition
+                              # (e.g. 5 CRC + 5 control) so CRC-vs-healthy is testable
 
 if __name__ == "__main__":
     if not os.path.exists(AGORA2_MANIFEST):
@@ -32,8 +34,18 @@ if __name__ == "__main__":
     if TEST_COHORT:
         taxonomy = taxonomy[taxonomy["cohort"] == TEST_COHORT]
     if TEST_N_SAMPLES:
-        keep = taxonomy["sample_id"].unique()[:TEST_N_SAMPLES]
+        if TEST_STRATIFY and "study_condition" in taxonomy.columns:
+            # balance N across conditions (e.g. 5 CRC + 5 control)
+            samp = taxonomy[["sample_id", "study_condition"]].drop_duplicates()
+            conds = samp["study_condition"].unique()
+            per = max(1, TEST_N_SAMPLES // len(conds))
+            keep = (samp.groupby("study_condition")["sample_id"]
+                    .apply(lambda s: s.head(per)).tolist())
+        else:
+            keep = list(taxonomy["sample_id"].unique()[:TEST_N_SAMPLES])
         taxonomy = taxonomy[taxonomy["sample_id"].isin(keep)]
+        print(f"Selected {len(keep)} samples"
+              + (f" stratified by condition" if TEST_STRATIFY else ""))
 
     micom_tax = taxonomy[["sample_id", "id", "abundance"]].copy()
     micom_tax["genus"]   = micom_tax["id"].str.split().str[0]
