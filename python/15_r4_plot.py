@@ -17,6 +17,7 @@ SPECIES_CLASS = {
     "Bacteroides_dorei": "NL", "Bacteroides_massiliensis": "NL", "Parabacteroides_merdae": "NL",
     "Bacteroides_vulgatus": "mL1", "Bacteroides_fragilis": "mL1", "Ruminococcus_gnavus": "mL1",
     "Bacteroides_cellulosilyticus": "L2", "Lactobacillus_rhamnosus": "L1",
+    "Prevotella_copri": "L1",  # L1-associated (Candeliere clustering)
 }
 GENUS_DEFAULT = {"Bacteroides": 0.7, "Parabacteroides": 0.7, "Escherichia": 1.0,
                  "Faecalibacterium": 1.0, "Eubacterium": 0.7, "Clostridium": 0.7,
