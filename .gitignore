@@ -25,3 +25,5 @@ renv/staging/
 .Rproj.user/
 *.Rhistory
 .RData
+
+pdfs_lookup/
