@@ -33,6 +33,7 @@ SPECIES_CLASS = {
     "Ruminococcus_gnavus":          "mL1",
     "Bacteroides_cellulosilyticus": "L2",   # L2 (Candeliere)
     "Lactobacillus_rhamnosus":      "L1",
+    "Prevotella_copri":             "L1",  # L1-associated (Candeliere clustering; metagenomic, not kinetic)
 }
 # genus default for carriers not individually looked up
 GENUS_DEFAULT = {"Bacteroides": 0.7, "Parabacteroides": 0.7, "Escherichia": 1.0,
