@@ -29,12 +29,13 @@ CONDITIONS = [(1.00, 10), (0.10, 10), (0.05, 10), (0.05, 50), (0.02, 5)]
 
 def cap_armA(com, supply):
     have = {r.id for r in com.exchanges}
-    med = dict(base_med); med[SN38G] = supply
-    com.medium = {r: f for r, f in med.items() if r in have}
-    com.variables.community_objective.lb = 0.0
-    com.objective = com.reactions.get_by_id(SN38)
-    s = com.optimize()
-    return float(s.objective_value) if s else 0.0
+    with com:                                  # isolate state
+        med = dict(base_med); med[SN38G] = supply
+        com.medium = {r: f for r, f in med.items() if r in have}
+        com.objective = com.reactions.get_by_id(SN38)
+        s = com.optimize()
+        val = float(s.objective_value) if s else 0.0
+    return val
 
 rows = []
 for sid in SAMPLES:
@@ -47,18 +48,20 @@ for sid in SAMPLES:
     have = {r.id for r in com.exchanges}
     print(f"\n{sid}: stage1 capacity (saturating) = {cap1.get(sid, float('nan')):.1f}", flush=True)
     for scale, supply in CONDITIONS:
-        # growth solution (cooperative tradeoff) under carbon-limited medium + finite SN-38G
-        med = {r: f * scale for r, f in base_med.items()}
-        med[SN38G] = supply                       # SN-38G NOT scaled (finite supply)
-        com.medium = {r: f for r, f in med.items() if r in have}
-        com.variables.community_objective.lb = 0.0
+        # growth solution (cooperative tradeoff) under carbon-limited medium + finite SN-38G.
+        # Mirror the working script 09: with-context, call cooperative_tradeoff on a clean model
+        # (do NOT pre-set community_objective.lb).
+        growth, incidental = float("nan"), float("nan")
         try:
-            sol = com.cooperative_tradeoff(fraction=0.5)
-            growth = sol.growth_rate
-            incidental = com.reactions.get_by_id(SN38).flux
+            with com:
+                med = {r: f * scale for r, f in base_med.items()}
+                med[SN38G] = supply                   # SN-38G NOT scaled (finite supply)
+                com.medium = {r: f for r, f in med.items() if r in have}
+                sol = com.cooperative_tradeoff(fraction=0.5)
+                growth = sol.growth_rate
+                incidental = com.reactions.get_by_id(SN38).flux
         except Exception as e:
-            growth, incidental = float("nan"), float("nan")
-            print(f"  scale={scale} supply={supply}: ERR {repr(e)[:80]}", flush=True)
+            print(f"  scale={scale} supply={supply}: ERR {repr(e)[:90]}", flush=True)
         armA = cap_armA(com, supply)              # max-secretion ceiling = min(supply, capacity)
         rows.append({"sample": sid, "scale": scale, "supply": supply,
                      "growth": round(growth, 4), "incidental_sn38": round(incidental, 3),
