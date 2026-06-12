@@ -97,5 +97,10 @@ if __name__ == "__main__":
 
     cap = pd.read_csv(CKPT_CSV).drop_duplicates("sample_id")
     cap.to_parquet(os.path.join(FLUX_DIR, "full_capacity.parquet"))
+    # also refresh the taxa-contributions parquet from its checkpoint (10_results reads the parquet)
+    if os.path.exists(CONTRIB_CSV):
+        con = pd.read_csv(CONTRIB_CSV).drop_duplicates(["sample_id", "taxon"])
+        con.to_parquet(os.path.join(FLUX_DIR, "full_taxa_contributions.parquet"))
+        print(f"Refreshed full_taxa_contributions.parquet ({len(con)} rows)", flush=True)
     print(f"\nDone. {len(cap)} samples -> {os.path.join(FLUX_DIR, 'full_capacity.parquet')}", flush=True)
     print(f"Median capacity: {cap['sn38_capacity'].median():.2f}", flush=True)

@@ -23,10 +23,26 @@ FIG  = "data/processed/figures"
 sns.set_theme(style="whitegrid", context="talk")
 os.makedirs(FIG, exist_ok=True)
 
-cap  = pd.read_parquet(f"{FLUX}/full_capacity.parquet")
-con  = pd.read_parquet(f"{FLUX}/full_taxa_contributions.parquet")
-meta = pd.read_parquet("data/processed/sample_metadata.parquet")
-cap  = cap.merge(meta[["sample_id", "cohort", "study_condition"]], on="sample_id", how="left")
+# Primary cohorts for R1-R6 (expanded 2026-06-12: +YachidaS_2019, +ThomasAM_2019_c).
+# Gupta/Hannigan are depth-sensitivity only (cohort_set=="sensitivity"); reported separately below.
+PRIMARY_COHORTS = ["ZellerG_2014", "YuJ_2015", "FengQ_2015", "ThomasAM_2018a", "ThomasAM_2018b",
+                   "WirbelJ_2018", "VogtmannE_2016", "YachidaS_2019", "ThomasAM_2019_c"]
+
+cap_all = pd.read_parquet(f"{FLUX}/full_capacity.parquet")
+con_all = pd.read_parquet(f"{FLUX}/full_taxa_contributions.parquet")
+
+# per-sample metadata from the taxonomy table (authoritative for all 11 cohorts + cohort_set)
+tax = pd.read_parquet("data/processed/taxonomy_micom.parquet")
+smeta = (tax[["sample_id", "cohort", "study_condition", "cohort_set"]]
+         .drop_duplicates("sample_id"))
+cap_all = cap_all.merge(smeta, on="sample_id", how="left")
+
+# split: primary drives R1-R6; sensitivity (shallow cohorts) reported on its own
+cap = cap_all[cap_all.cohort.isin(PRIMARY_COHORTS)].copy()
+con = con_all[con_all.sample_id.isin(set(cap.sample_id))].copy()
+cap_sens = cap_all[cap_all.cohort_set == "sensitivity"].copy()
+print(f"PRIMARY: {len(cap)} samples / {cap.cohort.nunique()} cohorts | "
+      f"SENSITIVITY: {len(cap_sens)} samples / {cap_sens.cohort.nunique()} cohorts\n")
 
 # ---------- R1: distribution ----------
 print("=" * 70)
@@ -39,7 +55,6 @@ print("\nmedian capacity by cohort:")
 print(cap.groupby("cohort")["sn38_capacity"].median().round(2).to_string())
 
 # ---------- R2: capacity vs carrier abundance ----------
-tax = pd.read_parquet("data/processed/taxonomy_micom.parquet")
 tax["taxon"] = tax["id"].str.replace(" ", "_", regex=False)
 carriers = con[["sample_id", "taxon"]].drop_duplicates()
 carr_ab = (carriers.merge(tax[["sample_id", "taxon", "abundance"]], on=["sample_id", "taxon"], how="left")
@@ -123,7 +138,18 @@ if len(sub):
     plt.title("R5: CRC vs control by cohort"); plt.legend(title="", fontsize=10)
     plt.tight_layout(); plt.savefig(f"{FIG}/results_R5_crc_vs_control.png", dpi=200); plt.close()
 
+# ---------- depth-sensitivity cohorts (Gupta, Hannigan): reported, NOT in primary ----------
+if len(cap_sens):
+    print("\n" + "=" * 70)
+    print("DEPTH-SENSITIVITY cohorts (shallow; excluded from primary R1-R6)")
+    print(cap_sens.groupby("cohort")["sn38_capacity"].describe()[["count", "50%", "min", "max"]]
+          .round(2).to_string())
+    print("compare medians to primary cohorts above; low capacity here may be depth-driven.")
+
 # save summary
 drv.to_csv(f"{FLUX}/results_driver_taxa.csv", index=False)
 if len(meta_df): meta_df.to_csv(f"{FLUX}/results_crc_meta.csv", index=False)
-print(f"\nFigures -> {FIG}/results_*.png ; tables -> {FLUX}/results_*.csv")
+cap_all[["sample_id", "cohort", "cohort_set", "study_condition", "sn38_capacity"]].to_csv(
+    f"{FLUX}/results_capacity_by_sample.csv", index=False)
+print(f"\nPRIMARY n={len(cap)} ({cap.cohort.nunique()} cohorts). "
+      f"Figures -> {FIG}/results_*.png ; tables -> {FLUX}/results_*.csv")
