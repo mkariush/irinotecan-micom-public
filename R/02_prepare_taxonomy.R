@@ -7,15 +7,14 @@ conflicted::conflict_prefer("select", "dplyr")
 conflicted::conflict_prefer("filter", "dplyr")
 conflicted::conflict_prefer("rename", "dplyr")
 
-COHORTS <- c(
-  "ZellerG_2014",
-  "YuJ_2015",
-  "FengQ_2015",
-  "ThomasAM_2018a",
-  "ThomasAM_2018b",
-  "WirbelJ_2018",
-  "VogtmannE_2016"
+# Primary cohorts (used for R1-R6) + depth-sensitivity cohorts (shallow; reported separately).
+COHORTS_PRIMARY <- c(
+  "ZellerG_2014", "YuJ_2015", "FengQ_2015",
+  "ThomasAM_2018a", "ThomasAM_2018b", "WirbelJ_2018", "VogtmannE_2016",
+  "YachidaS_2019", "ThomasAM_2019_c"
 )
+COHORTS_SENSITIVITY <- c("GuptaA_2019", "HanniganGD_2017")
+COHORTS <- c(COHORTS_PRIMARY, COHORTS_SENSITIVITY)
 
 RAW_DIR    <- "data/raw"
 PROC_DIR   <- "data/processed"
@@ -54,7 +53,8 @@ prepare_micom_table <- function(cohort, cutoff = ABUND_CUTOFF) {
 }
 
 all_cohorts <- map(COHORTS, prepare_micom_table)
-combined    <- bind_rows(all_cohorts)
+combined    <- bind_rows(all_cohorts) |>
+  dplyr::mutate(cohort_set = ifelse(cohort %in% COHORTS_PRIMARY, "primary", "sensitivity"))
 
 write_parquet(combined, file.path(PROC_DIR, "taxonomy_micom.parquet"))
 
