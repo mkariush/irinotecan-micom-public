@@ -8,6 +8,7 @@ rerun to continue, skipping samples already in the checkpoint.
 
 import os
 import glob
+import gc
 import pandas as pd
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from micom.util import load_pickle
@@ -74,26 +75,34 @@ if __name__ == "__main__":
     print(f"{len(models)} models total | {len(already)} done | {len(todo)} to process "
           f"| {N_WORKERS} workers", flush=True)
 
+    # Process in BATCHES, each with a FRESH ProcessPoolExecutor. Closing the pool after each batch
+    # terminates the workers and frees their accumulated memory -- this bounds RAM WITHOUT using
+    # max_tasks_per_child, which deadlocks on Windows when all workers recycle simultaneously.
+    BATCH = int(os.environ.get("CAP_BATCH", "60"))
     n = 0
-    with ProcessPoolExecutor(max_workers=N_WORKERS, initializer=_init,
-                             initargs=(MEDIUM_PATH,)) as ex:
-        futures = {ex.submit(_score, p): p for p in todo}
-        for fut in as_completed(futures):
-            sample, flux, contribs, err = fut.result()
-            n += 1
-            if err is not None:
-                print(f"  [{n}/{len(todo)}] {sample}: ERROR {err}", flush=True)
-                continue
-            pd.DataFrame([{"sample_id": sample, "sn38_capacity": flux,
-                           "n_gus_taxa": len(contribs)}]).to_csv(
-                CKPT_CSV, mode="a", header=not os.path.exists(CKPT_CSV), index=False)
-            if contribs:
-                pd.DataFrame([{"sample_id": sample, "taxon": t, "gus_flux": f}
-                              for t, f in contribs.items()]).to_csv(
-                    CONTRIB_CSV, mode="a", header=not os.path.exists(CONTRIB_CSV), index=False)
-            if n % 10 == 0 or n == len(todo):
-                print(f"  [{n}/{len(todo)}] {sample}: capacity={flux:.2f}, GUS taxa={len(contribs)}",
-                      flush=True)
+    for bstart in range(0, len(todo), BATCH):
+        batch = todo[bstart:bstart + BATCH]
+        with ProcessPoolExecutor(max_workers=N_WORKERS, initializer=_init,
+                                 initargs=(MEDIUM_PATH,)) as ex:
+            futures = {ex.submit(_score, p): p for p in batch}
+            for fut in as_completed(futures):
+                sample, flux, contribs, err = fut.result()
+                n += 1
+                if err is not None:
+                    print(f"  [{n}/{len(todo)}] {sample}: ERROR {err}", flush=True)
+                    continue
+                pd.DataFrame([{"sample_id": sample, "sn38_capacity": flux,
+                               "n_gus_taxa": len(contribs)}]).to_csv(
+                    CKPT_CSV, mode="a", header=not os.path.exists(CKPT_CSV), index=False)
+                if contribs:
+                    pd.DataFrame([{"sample_id": sample, "taxon": t, "gus_flux": f}
+                                  for t, f in contribs.items()]).to_csv(
+                        CONTRIB_CSV, mode="a", header=not os.path.exists(CONTRIB_CSV), index=False)
+                if n % 10 == 0 or n == len(todo):
+                    print(f"  [{n}/{len(todo)}] {sample}: capacity={flux:.2f}, GUS taxa={len(contribs)}",
+                          flush=True)
+        # pool closed -> workers exited -> their memory is released before the next batch
+        gc.collect()
 
     cap = pd.read_csv(CKPT_CSV).drop_duplicates("sample_id")
     cap.to_parquet(os.path.join(FLUX_DIR, "full_capacity.parquet"))
