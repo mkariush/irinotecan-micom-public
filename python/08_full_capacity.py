@@ -22,7 +22,7 @@ CONTRIB_CSV = os.path.join(FLUX_DIR, "full_taxa_contributions_checkpoint.csv")
 SN38_EXCHANGE  = "EX_sn38_m"
 SN38G_EXCHANGE = "EX_sn38g_m"
 UNLIMITED      = 1000.0
-N_WORKERS      = 4          # bump to 6-8 if you have the cores + RAM
+N_WORKERS      = int(os.environ.get("CAP_WORKERS", "4"))   # override via $env:CAP_WORKERS
 
 _MED = None   # per-worker cached medium
 
