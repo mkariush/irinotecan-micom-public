@@ -12,11 +12,15 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
+PRIMARY = ["ZellerG_2014", "YuJ_2015", "FengQ_2015", "ThomasAM_2018a", "ThomasAM_2018b",
+           "WirbelJ_2018", "VogtmannE_2016", "YachidaS_2019", "ThomasAM_2019_c"]
 rng = np.random.default_rng(0)
 cap  = pd.read_parquet("data/processed/flux/full_capacity.parquet")
-meta = pd.read_parquet("data/processed/sample_metadata.parquet")
-d = cap.merge(meta[["sample_id", "cohort", "study_condition"]], on="sample_id", how="left")
-d = d[d.study_condition.isin(["CRC", "control"])]
+# per-sample metadata from the 11-cohort taxonomy (sample_metadata.parquet is the stale 812-sample one)
+tax  = pd.read_parquet("data/processed/taxonomy_micom.parquet")
+meta = tax[["sample_id", "cohort", "study_condition"]].drop_duplicates("sample_id")
+d = cap.merge(meta, on="sample_id", how="left")
+d = d[d.cohort.isin(PRIMARY) & d.study_condition.isin(["CRC", "control"])]
 
 def cliffs_delta(crc, ctl):
     # positive => control > CRC
