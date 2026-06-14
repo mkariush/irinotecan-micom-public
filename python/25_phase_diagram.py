@@ -39,10 +39,9 @@ Z = np.array([[frac_capacity_limited(cm, d) for d in D_grid] for cm in cap_grid]
 D_box   = (1e-5, 1e-4)      # delivery avg->peak
 cap_box = (0.05, 2.75)      # Guthrie low->high metabolizer
 
-fig, ax = plt.subplots(figsize=(9, 7))
+fig, (ax, ax2) = plt.subplots(1, 2, figsize=(15, 6.5))
 im = ax.pcolormesh(np.log10(D_grid), np.log10(cap_grid), Z, cmap="RdYlBu_r", shading="auto", vmin=0, vmax=100)
 cb = fig.colorbar(im, ax=ax); cb.set_label("% communities CAPACITY-limited (composition matters)")
-# plausible region
 ax.add_patch(plt.Rectangle((np.log10(D_box[0]), np.log10(cap_box[0])),
              np.log10(D_box[1])-np.log10(D_box[0]), np.log10(cap_box[1])-np.log10(cap_box[0]),
              fill=False, edgecolor="k", lw=2.5, ls="--"))
@@ -50,9 +49,30 @@ ax.text(np.log10(np.sqrt(D_box[0]*D_box[1])), np.log10(np.sqrt(cap_box[0]*cap_bo
         "physiologically\nplausible", ha="center", va="center", fontsize=10, fontweight="bold")
 ax.set_xlabel("log10  substrate delivery D  (mmol/gDW/h)")
 ax.set_ylabel("log10  community capacity median  (mmol/gDW/h)")
-ax.set_title("When does microbial composition control SN-38 reactivation?\n"
+ax.set_title("(a) Regime map: when does composition control reactivation?\n"
              "blue = host-gated (delivery-limited) | red = microbiome-controlled")
+
+# Panel (b): local-peak sensitivity -- how far above average delivery before composition matters?
+D_AVG = 1e-5
+CAP_CENTRAL = float(np.sqrt(cap_box[0]*cap_box[1]))   # Guthrie geometric-mean capacity
+mult = np.logspace(0, 5, 200)                         # local-peak multiplier over whole-gut average
+fr = np.array([frac_capacity_limited(CAP_CENTRAL, D_AVG*m) for m in mult])
+ax2.plot(mult, fr, lw=2, color="tab:purple")
+for m_lab, lab, c in [(1,"whole-gut avg","tab:green"), (10,"plausible local","tab:orange"),
+                      (100,"high local","tab:orange")]:
+    ax2.axvline(m_lab, color=c, ls=":", lw=1.2); ax2.text(m_lab, 102, lab, rotation=90, va="bottom", ha="right", fontsize=8, color=c)
+ax2.set_xscale("log"); ax2.set_xlabel("local peak delivery / whole-gut average  (multiplier)")
+ax2.set_ylabel("% communities capacity-limited (composition matters)")
+ax2.set_title("(b) How large a LOCAL PEAK before composition matters?\n(central Guthrie capacity)")
+ax2.set_ylim(-2, 105)
 plt.tight_layout(); plt.savefig("data/processed/figures/results_phase_diagram.png", dpi=200); plt.close()
+
+# threshold multipliers for X% capacity-limited
+print("\nLOCAL-PEAK sensitivity (central Guthrie capacity, avg delivery 1e-5 mmol/gDW/h):")
+for X in [5, 10, 25, 50]:
+    idx = np.argmax(fr >= X)
+    m = mult[idx] if fr.max() >= X else np.inf
+    print(f"  {X:2d}% of communities capacity-limited needs local peak ~{m:,.0f}x the whole-gut average")
 
 # headline numbers at the plausible box corners + centre
 print("real-data relative capacity: median(nonzero)=%.1f, zero-carrier=%d/%d" % (rel_med, (rel==0).sum(), len(rel)))
