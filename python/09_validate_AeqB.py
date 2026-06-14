@@ -59,9 +59,18 @@ def arm_b(com):
         return (float(s.objective_value) if s is not None else 0.0), gr
 
 
+PRIMARY = ["ZellerG_2014", "YuJ_2015", "FengQ_2015", "ThomasAM_2018a", "ThomasAM_2018b",
+           "WirbelJ_2018", "VogtmannE_2016", "YachidaS_2019", "ThomasAM_2019_c"]
+
+def _meta():
+    """Per-sample cohort/condition from the 11-cohort taxonomy (sample_metadata.parquet is stale 812)."""
+    tax = pd.read_parquet("data/processed/taxonomy_micom.parquet")
+    return tax[["sample_id", "cohort", "study_condition"]].drop_duplicates("sample_id")
+
 def pick_subset() -> list:
-    """First N_PER_COHORT built samples per cohort."""
-    meta = pd.read_parquet(META_PATH)
+    """First N_PER_COHORT built samples per PRIMARY cohort (now spans all nine)."""
+    meta = _meta()
+    meta = meta[meta.cohort.isin(PRIMARY)]
     built = {os.path.basename(p).replace(".pickle", "") for p in glob.glob(os.path.join(MODELS_DIR, "*.pickle"))}
     meta = meta[meta["sample_id"].isin(built)]
     return (meta.sort_values("sample_id")
@@ -88,8 +97,7 @@ if __name__ == "__main__":
         print(f"  [{i}/{len(samples)}] {s}: A={a:.3f} B={b:.3f} reldiff={reldiff:.2e} {'OK' if equal else '*** DIVERGES ***'}")
 
     df = pd.DataFrame(rows)
-    df = df.merge(pd.read_parquet(META_PATH)[["sample_id", "cohort", "study_condition"]],
-                  on="sample_id", how="left")
+    df = df.merge(_meta(), on="sample_id", how="left")
     df.to_parquet(OUT_PATH)
 
     n_eq = int(df["A_eq_B"].sum())
