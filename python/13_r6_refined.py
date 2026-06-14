@@ -51,8 +51,9 @@ def eff(taxon):
 
 con  = pd.read_parquet("data/processed/flux/full_taxa_contributions.parquet")
 tax  = pd.read_parquet("data/processed/taxonomy_micom.parquet")
-meta = pd.read_parquet("data/processed/sample_metadata.parquet")
 tax["taxon"] = tax["id"].str.replace(" ", "_", regex=False)
+PRIMARY = ["ZellerG_2014","YuJ_2015","FengQ_2015","ThomasAM_2018a","ThomasAM_2018b",
+           "WirbelJ_2018","VogtmannE_2016","YachidaS_2019","ThomasAM_2019_c"]
 carr = (con[["sample_id", "taxon"]].drop_duplicates()
         .merge(tax[["sample_id", "taxon", "abundance"]], on=["sample_id", "taxon"], how="left")
         .dropna(subset=["abundance"]))
@@ -82,8 +83,9 @@ for i in range(12):
     print(f"{i+1:>4} {u[i][0]:30s}{u[i][1]:>7} {r[i][0]:30s}{r[i][1]:>7}")
 
 # R5 meta on refined capacity
-d = cap.merge(meta[["sample_id", "cohort", "study_condition"]], on="sample_id", how="left")
-d = d[d.study_condition.isin(["CRC", "control"])]
+smeta = tax[["sample_id", "cohort", "study_condition"]].drop_duplicates("sample_id")
+d = cap.merge(smeta, on="sample_id", how="left")
+d = d[d.cohort.isin(PRIMARY) & d.study_condition.isin(["CRC", "control"])]
 zs, ws = [], []
 for coh, g in d.groupby("cohort"):
     a = g.loc[g.study_condition == "CRC", "ref"]; b = g.loc[g.study_condition == "control", "ref"]
