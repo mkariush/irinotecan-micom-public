@@ -137,13 +137,31 @@ plt.title("R4: driver taxa"); plt.tight_layout()
 plt.savefig(f"{FIG}/results_R4_driver_taxa.png", dpi=200); plt.close()
 
 if len(sub):
-    plt.figure(figsize=(11, 4.5))
-    cond_palette = {"control": "#4C72B0", "CRC": "#C44E52"}   # control=blue, CRC=red
+    from matplotlib.patches import Patch
+    fig, ax = plt.subplots(figsize=(12, 4.5))
     sns.violinplot(data=sub, x="cohort", y="sn38_capacity", hue="study_condition",
-                   hue_order=["control", "CRC"], order=order, palette=cond_palette,
-                   saturation=1, alpha=0.25, cut=0, split=True, inner="quartile")
-    plt.ylabel("SN-38 reactivation capacity (relative units)"); plt.xlabel(""); plt.xticks(rotation=30, ha="right")
-    plt.legend(title="", fontsize=9, loc="upper left")
+                   hue_order=["control", "CRC"], order=order, split=True,
+                   cut=0, inner="quartile", linewidth=0.8, ax=ax,
+                   palette={"control": "0.8", "CRC": "0.8"})
+    # Two categorical dimensions: cohort = fill colour (as in Fig 1); condition = texture
+    # (control solid, CRC hatched). Recolour each split-violin half by its cohort.
+    for coll in ax.collections:
+        paths = coll.get_paths()
+        if not paths:
+            continue
+        xc = paths[0].vertices[:, 0].mean()
+        ci = int(round(xc))
+        if 0 <= ci < len(order):
+            coll.set_facecolor(cohort_palette[order[ci]])
+            coll.set_edgecolor("0.25")
+            coll.set_alpha(0.85)
+            if xc > ci:                      # right half = CRC (hue_order control, CRC)
+                coll.set_hatch("/////")
+    ax.set_ylabel("SN-38 reactivation capacity (relative units)"); ax.set_xlabel("")
+    plt.xticks(rotation=30, ha="right")
+    legend_elems = [Patch(facecolor="0.8", edgecolor="0.25", label="control"),
+                    Patch(facecolor="0.8", edgecolor="0.25", hatch="/////", label="CRC")]
+    ax.legend(handles=legend_elems, title="", loc="upper left", fontsize=9, frameon=True)
     plt.tight_layout(); plt.savefig(f"{FIG}/results_R5_crc_vs_control.png", dpi=DPI); plt.close()
 
 # ---------- depth-sensitivity cohorts (Gupta, Hannigan): reported, NOT in primary ----------
