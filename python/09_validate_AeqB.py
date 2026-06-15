@@ -77,13 +77,17 @@ def pick_subset() -> list:
             .groupby("cohort").head(N_PER_COHORT)["sample_id"].tolist())
 
 
+CKPT_CSV = OUT_PATH.replace(".parquet", "_checkpoint.csv")
+
 if __name__ == "__main__":
     os.makedirs(os.path.dirname(OUT_PATH), exist_ok=True)
     samples = pick_subset()
-    print(f"Validating A==B on {len(samples)} samples across cohorts")
+    # RESUMABLE: skip samples already in the checkpoint (the QP is slow; protect a long run)
+    done = set(pd.read_csv(CKPT_CSV)["sample_id"]) if os.path.exists(CKPT_CSV) else set()
+    todo = [s for s in samples if s not in done]
+    print(f"Validating A==B on {len(samples)} samples | {len(done)} done | {len(todo)} to do", flush=True)
 
-    rows = []
-    for i, s in enumerate(samples, 1):
+    for i, s in enumerate(todo, 1):
         path = os.path.join(MODELS_DIR, s + ".pickle")
         if not os.path.exists(path):
             continue
@@ -92,11 +96,12 @@ if __name__ == "__main__":
         b, gr = arm_b(com)
         reldiff = abs(a - b) / max(a, 1e-9)
         equal = reldiff < REL_TOL
-        rows.append({"sample_id": s, "arm_a": a, "arm_b": b, "growth": gr,
-                     "rel_diff": reldiff, "A_eq_B": equal})
-        print(f"  [{i}/{len(samples)}] {s}: A={a:.3f} B={b:.3f} reldiff={reldiff:.2e} {'OK' if equal else '*** DIVERGES ***'}")
+        pd.DataFrame([{"sample_id": s, "arm_a": a, "arm_b": b, "growth": gr,
+                       "rel_diff": reldiff, "A_eq_B": equal}]).to_csv(
+            CKPT_CSV, mode="a", header=not os.path.exists(CKPT_CSV), index=False)
+        print(f"  [{i}/{len(todo)}] {s}: A={a:.3f} B={b:.3f} reldiff={reldiff:.2e} {'OK' if equal else '*** DIVERGES ***'}", flush=True)
 
-    df = pd.DataFrame(rows)
+    df = pd.read_csv(CKPT_CSV).drop_duplicates("sample_id")
     df = df.merge(_meta(), on="sample_id", how="left")
     df.to_parquet(OUT_PATH)
 
