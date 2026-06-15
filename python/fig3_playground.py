@@ -12,6 +12,7 @@ import pandas as pd
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+from matplotlib.patches import Patch
 import seaborn as sns
 
 # ---------------- STYLE (edit me) ----------------
@@ -21,8 +22,8 @@ TOPN       = 12
 NORMALIZE  = False          # Panel A: False = absolute stacked flux; True = proportional (100%) composition
 PALETTE    = "tab10"        # MUST match Fig 1
 THEME_CTX  = "paper"
-A_SIZE     = (7.5, 6)
-B_SIZE     = (7.5, 6)
+A_SIZE     = (5.5, 4)
+B_SIZE     = (5.5, 4)
 BAR_EDGE   = "white"        # separator between cohort segments in Panel A
 BAR_LW     = 0.3
 DEMOTE     = 0.7            # Panel B: weighted < DEMOTE x uniform -> crimson
@@ -90,11 +91,14 @@ if RENDER_B:
     drop = wt < DEMOTE * uni
     y = np.arange(len(top)); h = 0.38
     fig, ax = plt.subplots(figsize=B_SIZE)
-    ax.barh(y + h/2, uni, height=h, color="0.6", label="uniform")
-    ax.barh(y - h/2, wt, height=h, color=["crimson" if d else "teal" for d in drop], label="class-weighted")
+    ax.barh(y + h/2, uni, height=h, color="0.6")
+    ax.barh(y - h/2, wt, height=h, color=["crimson" if d else "teal" for d in drop])
     ax.set_yticks(y); ax.set_yticklabels([f"{t.replace('_', ' ')}  [{cls(t)}]" for t in top])
     ax.invert_yaxis()
     ax.set_xlabel("summed contribution to community SN-38 secretion (relative units)")
-    ax.legend(loc=B_LEGEND_LOC, fontsize=8, frameon=True)
+    leg = [Patch(facecolor="0.6", label="uniform"), Patch(facecolor="teal", label="class-weighted")]
+    if drop.any():
+        leg.append(Patch(facecolor="crimson", label="class-weighted, demoted (<0.7× uniform)"))
+    ax.legend(handles=leg, loc=B_LEGEND_LOC, fontsize=7.5, frameon=True)
     plt.tight_layout(); plt.savefig(f"{OUT_B}.{FMT}", dpi=DPI); plt.close()
     print(f"Panel B -> {OUT_B}.{FMT}  demoted: {[top[i].replace('_',' ') for i in np.where(drop)[0]]}")

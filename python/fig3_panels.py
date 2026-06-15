@@ -18,6 +18,7 @@ import pandas as pd
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+from matplotlib.patches import Patch
 import seaborn as sns
 
 # ---------------- STYLE ----------------
@@ -89,13 +90,16 @@ def panel_B(fname):
     drop = wt < 0.7 * uni
     y = np.arange(len(top)); h = 0.38
     fig, ax = plt.subplots(figsize=B_SIZE)
-    ax.barh(y + h/2, uni, height=h, color="0.6", label="uniform")
-    ax.barh(y - h/2, wt, height=h, color=["crimson" if d else "teal" for d in drop],
-            label="class-weighted")
+    ax.barh(y + h/2, uni, height=h, color="0.6")
+    ax.barh(y - h/2, wt, height=h, color=["crimson" if d else "teal" for d in drop])
     ax.set_yticks(y); ax.set_yticklabels([f"{t.replace('_', ' ')}  [{cls(t)}]" for t in top])
     ax.invert_yaxis()
     ax.set_xlabel("summed contribution to community SN-38 secretion (relative units)")
-    ax.legend(loc="lower right", fontsize=8, frameon=True)
+    leg = [Patch(facecolor="0.6", label="uniform"),
+           Patch(facecolor="teal", label="class-weighted")]
+    if drop.any():
+        leg.append(Patch(facecolor="crimson", label="class-weighted, demoted (<0.7× uniform)"))
+    ax.legend(handles=leg, loc="lower right", fontsize=7.5, frameon=True)
     plt.tight_layout(); plt.savefig(f"{fname}.{FMT}", dpi=DPI); plt.close()
     print(f"  {fname}.{FMT}  demoted (<0.7x): {[top[i].replace('_',' ') for i in np.where(drop)[0]]}")
 
