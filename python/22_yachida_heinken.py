@@ -44,7 +44,7 @@ carriers = con[con.sample_id.isin(set(ya.sample_id))][["sample_id", "taxon"]].dr
 carr_ab = (carriers.merge(tax[["sample_id", "taxon", "abundance"]], on=["sample_id", "taxon"], how="left")
            .groupby("sample_id")["abundance"].sum().rename("carrier_abundance").reset_index())
 y2 = ya.merge(carr_ab, on="sample_id", how="left").fillna({"carrier_abundance": 0.0})
-m = y2[y2.carrier_abundance > 0]
+m = y2   # all Yachida samples (same rule as the main R2); the zero-carrier sits at the origin
 slope, intercept = np.polyfit(m.carrier_abundance, m.sn38_capacity, 1)
 r = np.corrcoef(m.carrier_abundance, m.sn38_capacity)[0, 1]
 print("\nlinearity (Heinken Fig 5b analogue): capacity = %.1f x carrier_abundance, r2=%.4f" % (slope, r**2))
