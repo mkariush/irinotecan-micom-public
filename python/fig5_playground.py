@@ -17,10 +17,10 @@ import seaborn as sns
 # ---------------- STYLE (edit me) ----------------
 FIGSIZE      = (12, 4.5)
 PALETTE      = "tab10"       # MUST match Fig 1 for consistency
-VIOLIN_ALPHA = 0.85         # fill opacity of the violins
+VIOLIN_ALPHA = 0.2         # fill opacity of the violins
 VIOLIN_EDGE  = "0.25"       # outline + hatch colour
 VIOLIN_LW    = 0.8          # violin outline width
-HATCH        = "/////"      # CRC texture; try "///", "\\\\", "xxxx", "...."
+HATCH        = "////"      # CRC texture; try "///", "\\\\", "xxxx", "...."
 INNER        = "quartile"   # "quartile" | "box" | "point" | None
 THEME_CTX    = "paper"       # "notebook" | "talk" | "paper" | "poster"
 SHOW_TITLE   = False
@@ -29,6 +29,15 @@ YLABEL       = "SN-38 reactivation capacity (relative units)"
 LEGEND_LOC   = "upper left"
 OUT          = "data/processed/figures/results_R5_crc_vs_control_TEST.png"   # _TEST, not the real one
 DPI          = 600
+# points overlay
+SHOW_POINTS     = True
+POINT_BY_COHORT = True       # True: points coloured by cohort (like Fig 1); False: neutral grey
+POINT_SIZE      = 2.5
+POINT_ALPHA     = 0.55
+POINT_EDGE      = "0.25"
+POINT_LW        = 0.15
+POINT_JITTER    = 0.08
+POINT_NEUTRAL   = "0.3"
 # -------------------------------------------------
 
 PRIMARY_COHORTS = ["ZellerG_2014", "YuJ_2015", "FengQ_2015", "ThomasAM_2018a", "ThomasAM_2018b",
@@ -63,6 +72,25 @@ for coll in ax.collections:
         coll.set_alpha(VIOLIN_ALPHA)
         if xc > ci:                      # right half = CRC (hue_order control, CRC)
             coll.set_hatch(HATCH)
+
+# points overlay -- dodged so control lands on the left half, CRC on the right half
+n_violin = len(ax.collections)
+if SHOW_POINTS:
+    sns.stripplot(data=sub, x="cohort", y="sn38_capacity", hue="study_condition",
+                  hue_order=["control", "CRC"], order=order, dodge=True, jitter=POINT_JITTER,
+                  size=POINT_SIZE, linewidth=POINT_LW, edgecolor=POINT_EDGE, ax=ax,
+                  legend=False, palette={"control": POINT_NEUTRAL, "CRC": POINT_NEUTRAL})
+    if POINT_BY_COHORT:
+        for coll in ax.collections[n_violin:]:        # only the point collections
+            offs = coll.get_offsets()
+            if len(offs) == 0:
+                continue
+            cols = []
+            for x, _ in offs:
+                ci = int(round(x))
+                cols.append(cohort_palette[order[ci]] if 0 <= ci < len(order) else (0.3, 0.3, 0.3))
+            coll.set_facecolor(cols)
+            coll.set_alpha(POINT_ALPHA)
 
 ax.set_ylabel(YLABEL); ax.set_xlabel("")
 plt.xticks(rotation=30, ha="right")
