@@ -20,7 +20,8 @@ import seaborn as sns
 
 FLUX = "data/processed/flux"
 FIG  = "data/processed/figures"
-sns.set_theme(style="whitegrid", context="talk")
+sns.set_theme(style="whitegrid", context="paper")   # publication context (was "talk")
+DPI  = 600                                           # publication resolution (was 200)
 os.makedirs(FIG, exist_ok=True)
 
 # Primary cohorts for R1-R6 (expanded 2026-06-12: +YachidaS_2019, +ThomasAM_2019_c).
@@ -108,18 +109,18 @@ if len(meta_df):
     print(f"direction: {'control > CRC' if z_meta>0 else 'CRC > control'} (signed by rank-biserial)")
 
 # ---------- figures ----------
-plt.figure(figsize=(12, 6))
+plt.figure(figsize=(9, 4.5))
 order = cap.groupby("cohort")["sn38_capacity"].median().sort_values().index
 cohort_palette = dict(zip(order, sns.color_palette("tab10", n_colors=len(order))))
 sns.violinplot(data=cap, x="cohort", y="sn38_capacity", order=order, hue="cohort",
-               hue_order=order, palette=cohort_palette, saturation=0.7,
+               hue_order=order, palette=cohort_palette, saturation=1, alpha=0.2,
                cut=0, inner="quartile", legend=False)
 sns.stripplot(data=cap, x="cohort", y="sn38_capacity", order=order, hue="cohort",
-              hue_order=order, palette=cohort_palette, size=4, alpha=0.65,
+              hue_order=order, palette=cohort_palette, size=6, alpha=0.65,
               edgecolor="0.3", linewidth=0.2, legend=False)
 plt.ylabel("SN-38 reactivation capacity (relative units)"); plt.xlabel(""); plt.xticks(rotation=30, ha="right")
 plt.tight_layout()
-plt.savefig(f"{FIG}/results_R1_by_cohort.png", dpi=200); plt.close()
+plt.savefig(f"{FIG}/results_R1_by_cohort.png", dpi=DPI); plt.close()
 
 plt.figure(figsize=(8, 7))
 sns.regplot(data=m, x="carrier_abundance", y="sn38_capacity",
@@ -136,12 +137,14 @@ plt.title("R4: driver taxa"); plt.tight_layout()
 plt.savefig(f"{FIG}/results_R4_driver_taxa.png", dpi=200); plt.close()
 
 if len(sub):
-    plt.figure(figsize=(11, 6))
+    plt.figure(figsize=(11, 4.5))
+    cond_palette = {"control": "#4C72B0", "CRC": "#C44E52"}   # control=blue, CRC=red
     sns.violinplot(data=sub, x="cohort", y="sn38_capacity", hue="study_condition",
-                   order=order, cut=0, split=False, inner="quartile")
-    plt.ylabel("SN-38 capacity"); plt.xlabel(""); plt.xticks(rotation=30, ha="right")
-    plt.title("R5: CRC vs control by cohort"); plt.legend(title="", fontsize=10)
-    plt.tight_layout(); plt.savefig(f"{FIG}/results_R5_crc_vs_control.png", dpi=200); plt.close()
+                   hue_order=["control", "CRC"], order=order, palette=cond_palette,
+                   saturation=1, alpha=0.25, cut=0, split=True, inner="quartile")
+    plt.ylabel("SN-38 reactivation capacity (relative units)"); plt.xlabel(""); plt.xticks(rotation=30, ha="right")
+    plt.legend(title="", fontsize=9, loc="upper left")
+    plt.tight_layout(); plt.savefig(f"{FIG}/results_R5_crc_vs_control.png", dpi=DPI); plt.close()
 
 # ---------- depth-sensitivity cohorts (Gupta, Hannigan): reported, NOT in primary ----------
 if len(cap_sens):
