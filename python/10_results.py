@@ -110,10 +110,15 @@ if len(meta_df):
 # ---------- figures ----------
 plt.figure(figsize=(12, 6))
 order = cap.groupby("cohort")["sn38_capacity"].median().sort_values().index
-sns.violinplot(data=cap, x="cohort", y="sn38_capacity", order=order, cut=0, inner="quartile", color="0.85")
-sns.stripplot(data=cap, x="cohort", y="sn38_capacity", order=order, size=2.5, alpha=0.4, color="tab:blue")
-plt.ylabel("SN-38 reactivation capacity"); plt.xlabel(""); plt.xticks(rotation=30, ha="right")
-plt.title("R1: capacity across cohorts (n=%d)" % len(cap)); plt.tight_layout()
+cohort_palette = dict(zip(order, sns.color_palette("tab10", n_colors=len(order))))
+sns.violinplot(data=cap, x="cohort", y="sn38_capacity", order=order, hue="cohort",
+               hue_order=order, palette=cohort_palette, saturation=0.35,
+               cut=0, inner="quartile", legend=False)
+sns.stripplot(data=cap, x="cohort", y="sn38_capacity", order=order, hue="cohort",
+              hue_order=order, palette=cohort_palette, size=4, alpha=0.65,
+              edgecolor="0.3", linewidth=0.2, legend=False)
+plt.ylabel("SN-38 reactivation capacity (relative units)"); plt.xlabel(""); plt.xticks(rotation=30, ha="right")
+plt.title("Predicted SN-38 reactivation capacity across cohorts (n=%d)" % len(cap)); plt.tight_layout()
 plt.savefig(f"{FIG}/results_R1_by_cohort.png", dpi=200); plt.close()
 
 plt.figure(figsize=(8, 7))
