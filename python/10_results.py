@@ -129,12 +129,8 @@ plt.xlabel("summed GUS-carrier abundance"); plt.ylabel("SN-38 capacity")
 plt.title(f"R2: slope={slope:.0f}, r^2={corr**2:.3f}"); plt.tight_layout()
 plt.savefig(f"{FIG}/results_R2_abundance.png", dpi=200); plt.close()
 
-plt.figure(figsize=(10, 7))
-top = drv.head(15)
-sns.barplot(data=top, y="taxon", x="total_flux", color="tab:green")
-plt.xlabel("total GUS flux (summed across samples)"); plt.ylabel("")
-plt.title("R4: driver taxa"); plt.tight_layout()
-plt.savefig(f"{FIG}/results_R4_driver_taxa.png", dpi=200); plt.close()
+# R4 driver-taxa figure moved to python/fig3_panels.py (2-panel: stacked-by-cohort + reweighting).
+# This script still prints the R4 ranking above; it no longer renders the old single-bar figure.
 
 if len(sub):
     from matplotlib.patches import Patch
