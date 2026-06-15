@@ -61,7 +61,7 @@ carriers = con[["sample_id", "taxon"]].drop_duplicates()
 carr_ab = (carriers.merge(tax[["sample_id", "taxon", "abundance"]], on=["sample_id", "taxon"], how="left")
            .groupby("sample_id")["abundance"].sum().rename("carrier_abundance").reset_index())
 r2 = cap.merge(carr_ab, on="sample_id", how="left").fillna({"carrier_abundance": 0.0})
-m = r2[r2.carrier_abundance > 0]
+m = r2   # all 1,509 primary samples; the 4 zero-carrier sit at the origin, on the line (0 = 100x0)
 slope, intercept = np.polyfit(m.carrier_abundance, m.sn38_capacity, 1)
 corr = np.corrcoef(m.carrier_abundance, m.sn38_capacity)[0, 1]
 print("\n" + "=" * 70)
