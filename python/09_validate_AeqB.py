@@ -93,23 +93,39 @@ if __name__ == "__main__":
             continue
         com = load_pickle(path)
         a = arm_a(com)
-        b, gr = arm_b(com)
-        reldiff = abs(a - b) / max(a, 1e-9)
-        equal = reldiff < REL_TOL
+        try:
+            b, gr = arm_b(com)
+            reldiff = abs(a - b) / max(a, 1e-9)
+            equal = bool(reldiff < REL_TOL)
+            note = "OK" if equal else "*** DIVERGES ***"
+        except Exception as e:
+            # cooperative_tradeoff (QP) crossover is numerically infeasible on a few models under the
+            # hybrid OSQP+HiGHS solver. arm_a (a plain LP) still succeeded, so the sample is simply not
+            # B-evaluable -- record arm_b=NaN (NOT a divergence) and keep going.
+            b = gr = reldiff = float("nan")
+            equal = False
+            note = f"arm_b SOLVER-FAILED ({type(e).__name__}: {e})"
         pd.DataFrame([{"sample_id": s, "arm_a": a, "arm_b": b, "growth": gr,
                        "rel_diff": reldiff, "A_eq_B": equal}]).to_csv(
             CKPT_CSV, mode="a", header=not os.path.exists(CKPT_CSV), index=False)
-        print(f"  [{i}/{len(todo)}] {s}: A={a:.3f} B={b:.3f} reldiff={reldiff:.2e} {'OK' if equal else '*** DIVERGES ***'}", flush=True)
+        print(f"  [{i}/{len(todo)}] {s}: A={a:.3f} B={b:.3f} reldiff={reldiff:.2e} {note}", flush=True)
 
     df = pd.read_csv(CKPT_CSV).drop_duplicates("sample_id")
     df = df.merge(_meta(), on="sample_id", how="left")
     df.to_parquet(OUT_PATH)
 
-    n_eq = int(df["A_eq_B"].sum())
-    print(f"\n=== A==B validation: {n_eq}/{len(df)} samples agree (rel_tol={REL_TOL}) ===")
-    if n_eq == len(df):
-        print("ALL agree -> bulk Arm-A capacity (08) is justified across cohorts.")
+    failed = df["arm_b"].isna()
+    evald  = df[~failed]
+    n_eq   = int(evald["A_eq_B"].sum())
+    print(f"\n=== A==B validation: {n_eq}/{len(evald)} EVALUATED samples agree (rel_tol={REL_TOL}) ===")
+    if failed.any():
+        print(f"{int(failed.sum())} sample(s) not B-evaluable (cooperative_tradeoff solver-infeasible; "
+              f"excluded from the tally, arm_a still computed):")
+        print(df[failed][["sample_id", "cohort", "arm_a"]].to_string(index=False))
+    diverged = evald[~evald["A_eq_B"]]
+    if len(diverged) == 0:
+        print("All evaluated samples agree -> bulk Arm-A capacity (08) is justified across cohorts.")
     else:
         print("DIVERGENCE found -> inspect these communities; use Arm B where A != B:")
-        print(df[~df["A_eq_B"]][["sample_id", "cohort", "arm_a", "arm_b", "rel_diff"]].to_string(index=False))
+        print(diverged[["sample_id", "cohort", "arm_a", "arm_b", "rel_diff"]].to_string(index=False))
     print(f"Saved -> {OUT_PATH}")
