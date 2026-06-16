@@ -30,7 +30,6 @@ CORR_METHOD = "pearson"        # "pearson" (17b) | "spearman"
 CORR_YLIM   = (-0.1, 1.05)     # show the small negative corr dip honestly; (0, 1.05) to floor at 0
 CV_COLOR    = "tab:red"
 CORR_COLOR  = "tab:blue"
-PHYS_MAX    = 8
 DPI         = 600
 # ---------------------------------------
 
@@ -84,8 +83,6 @@ def panel_B(stem):
     ax2.tick_params(axis="y", labelcolor=CORR_COLOR); ax2.set_ylim(*CORR_YLIM)
     if SHOW_TITLE:
         axB.set_title(B_TITLE)
-    axB.axvspan(supplies[0], PHYS_MAX, color="0.9", zorder=0)
-    axB.text(2.2, axB.get_ylim()[1] * 0.93, "physiological\n(delivery-limited)", fontsize=9, ha="center")
     plt.tight_layout()
     for fmt in ("svg", "png"):
         plt.savefig(f"{stem}.{fmt}", dpi=DPI)

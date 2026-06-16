@@ -21,21 +21,20 @@ from scipy.stats import spearmanr
 # ---------------- STYLE (edit me) ----------------
 RENDER_A    = True
 RENDER_B    = True
-FMT         = "png"          # "png" for quick view | "svg" for the Inkscape deliverable | "pdf"
+FMT         = "svg"          # "png" for quick view | "svg" for the Inkscape deliverable | "pdf"
 DPI         = 600
-A_SIZE      = (7, 6)
-B_SIZE      = (7, 6)
+A_SIZE      = (4.5, 4)
+B_SIZE      = (4.5, 4)
 CMAP        = "viridis"
 A_YLIM      = (0, 95)        # cap to the capacity range so per-sample plateaus are visible
 REF_LINE    = True           # dashed "realized = supply" envelope in Panel A
-SHOW_TITLE  = True           # the descriptive two-line titles (set False for Inkscape if caption covers it)
+SHOW_TITLE  = False           # the descriptive two-line titles (set False for Inkscape if caption covers it)
 A_TITLE     = "Each community plateaus at its potential,\nthen tracks the delivered amount"
 B_TITLE     = "As substrate drops: variation collapses,\ncapacity decouples from composition"
 CORR_METHOD = "pearson"      # "pearson" (matches 17b np.corrcoef) | "spearman"
 CORR_YLIM   = (-0.1, 1.05)   # show the small negative dip honestly; set (0, 1.05) to floor at 0
 CV_COLOR    = "tab:red"
 CORR_COLOR  = "tab:blue"
-PHYS_MAX    = 8              # shade supply <= this as the physiological / delivery-limited band
 OUT_A       = "data/processed/figures/results_R6_A_collapse_TEST"
 OUT_B       = "data/processed/figures/results_R6_B_metrics_TEST"
 # -------------------------------------------------
@@ -85,8 +84,6 @@ if RENDER_B:
     ax2.tick_params(axis="y", labelcolor=CORR_COLOR); ax2.set_ylim(*CORR_YLIM)
     if SHOW_TITLE:
         axB.set_title(B_TITLE)
-    axB.axvspan(supplies[0], PHYS_MAX, color="0.9", zorder=0)
-    axB.text(2.2, axB.get_ylim()[1] * 0.93, "physiological\n(delivery-limited)", fontsize=9, ha="center")
     plt.tight_layout(); plt.savefig(f"{OUT_B}.{FMT}", dpi=DPI); plt.close()
     lim = summ.iloc[0]; sat = summ.iloc[-1]
     print(f"Panel B -> {OUT_B}.{FMT}  | corr limiting={lim['corr']:.3f} saturating={sat['corr']:.3f} "
