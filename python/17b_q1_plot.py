@@ -15,7 +15,7 @@ from matplotlib.cm import ScalarMappable
 from matplotlib.colors import Normalize
 
 DPI      = 600
-OUT_PNG  = "data/processed/figures/results_Q1_collapse.png"     # overwrites the stale 42-sample one
+OUT_PNG  = "data/processed/figures/results_R6_collapse.png"     # combined alternate to the 2-panel fig6_panels.py
 OUT_SVG  = "data/processed/figures/results_R6_collapse.svg"
 
 df = pd.read_parquet("data/processed/flux/substrate_sweep_45.parquet")
