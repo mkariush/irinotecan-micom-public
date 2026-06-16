@@ -18,7 +18,9 @@ import seaborn as sns
 # ---------------- STYLE (edit me) ----------------
 RENDER_A   = True
 RENDER_B   = True
+RENDER_C   = True            # per-sample uniform vs class-weighted capacity scatter (ρ)
 TOPN       = 12
+C_SIZE     = (5.5, 5)
 NORMALIZE  = False          # Panel A: False = absolute stacked flux; True = proportional (100%) composition
 PALETTE    = "tab10"        # MUST match Fig 1
 THEME_CTX  = "paper"
@@ -33,6 +35,7 @@ FMT        = "svg"          # playground default; fig3_panels.py emits svg
 DPI        = 600
 OUT_A      = "data/processed/figures/results_R4_A_drivers_TEST"
 OUT_B      = "data/processed/figures/results_R4_B_reweight_TEST"
+OUT_C      = "data/processed/figures/results_R4_C_persample_TEST"
 # -------------------------------------------------
 
 FLUX = "data/processed/flux"
@@ -54,6 +57,7 @@ def cls(t): return SPECIES_CLASS.get(t, "?")
 
 con = pd.read_parquet(f"{FLUX}/full_taxa_contributions.parquet")
 tax = pd.read_parquet("data/processed/taxonomy_micom.parquet")
+tax["taxon"] = tax["id"].str.replace(" ", "_", regex=False)
 smeta = tax[["sample_id", "cohort"]].drop_duplicates("sample_id")
 con = con.merge(smeta, on="sample_id", how="left")
 con = con[con.cohort.isin(PRIMARY)]
@@ -80,7 +84,7 @@ if RENDER_A:
         left += vals
     ax.set_yticks(y); ax.set_yticklabels([t.replace("_", " ") for t in top]); ax.invert_yaxis()
     ax.set_xlabel("cohort share of β-glucuronidase flux (%)" if NORMALIZE
-                  else "summed β-glucuronidase flux across samples (relative units; ≈ carriage × uniform cap)")
+                  else "summed β-glucuronidase flux across samples\n (relative units; ≈ carriage × uniform cap)")
     ax.legend(fontsize=7, loc=A_LEGEND_LOC, title="cohort", title_fontsize=7, frameon=True)
     plt.tight_layout(); plt.savefig(f"{OUT_A}.{FMT}", dpi=DPI); plt.close()
     print(f"Panel A -> {OUT_A}.{FMT}  (NORMALIZE={NORMALIZE}, TOPN={TOPN})")
@@ -95,10 +99,37 @@ if RENDER_B:
     ax.barh(y - h/2, wt, height=h, color=["red" if d else "green" for d in drop])
     ax.set_yticks(y); ax.set_yticklabels([f"{t.replace('_', ' ')}  [{cls(t)}]" for t in top])
     ax.invert_yaxis()
-    ax.set_xlabel("summed β-glucuronidase flux across samples (relative units)")
+    ax.set_xlabel("summed β-glucuronidase flux across samples\n (relative units)")
     leg = [Patch(facecolor="0.6", label="uniform"), Patch(facecolor="green", label="class-weighted")]
     if drop.any():
         leg.append(Patch(facecolor="red", label="class-weighted, demoted (<0.7× uniform)"))
     ax.legend(handles=leg, loc=B_LEGEND_LOC, fontsize=7.5, frameon=True)
     plt.tight_layout(); plt.savefig(f"{OUT_B}.{FMT}", dpi=DPI); plt.close()
     print(f"Panel B -> {OUT_B}.{FMT}  demoted: {[top[i].replace('_',' ') for i in np.where(drop)[0]]}")
+
+if RENDER_C:
+    from scipy.stats import spearmanr
+    carr = (con[["sample_id", "taxon", "cohort"]].drop_duplicates(["sample_id", "taxon"])
+            .merge(tax[["sample_id", "taxon", "abundance"]], on=["sample_id", "taxon"], how="left")
+            .dropna(subset=["abundance"]))
+    carr["eff"] = carr["taxon"].map(eff)
+    uni = carr.groupby("sample_id")["abundance"].sum().mul(100).rename("uni")
+    carr["w"] = carr["abundance"] * carr["eff"]
+    ref = carr.groupby("sample_id")["w"].sum().mul(100).rename("ref")
+    d = pd.concat([uni, ref], axis=1).reset_index().merge(smeta, on="sample_id", how="left")
+    d = d[d.cohort.isin(PRIMARY)]
+    rho = spearmanr(d["uni"], d["ref"]).correlation
+    fig, ax = plt.subplots(figsize=C_SIZE)
+    for coh in order:
+        g = d[d.cohort == coh]
+        ax.scatter(g["uni"], g["ref"], s=8, alpha=0.5, color=palette[coh], edgecolor="none", label=coh)
+    lim = max(d["uni"].max(), d["ref"].max()) * 1.05
+    ax.plot([0, lim], [0, lim], "--", color="0.4", lw=1, zorder=1, label="y = x")
+    ax.set_xlim(0, lim); ax.set_ylim(0, lim); ax.set_aspect("equal")
+    ax.set_xlabel("uniform per-sample capacity (relative units)")
+    ax.set_ylabel("class-weighted per-sample capacity (relative units)")
+    ax.text(0.04, 0.96, f"Spearman ρ = {rho:.2f}  (n = {len(d)})", transform=ax.transAxes,
+            va="top", ha="left", fontsize=9, bbox=dict(boxstyle="round,pad=0.3", fc="white", ec="0.7", alpha=0.85))
+    ax.legend(fontsize=6, loc="lower right", frameon=True)
+    plt.tight_layout(); plt.savefig(f"{OUT_C}.{FMT}", dpi=DPI); plt.close()
+    print(f"Panel C -> {OUT_C}.{FMT}  Spearman(uniform, weighted) = {rho:.3f} (n={len(d)})")

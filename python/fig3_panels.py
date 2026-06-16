@@ -29,6 +29,7 @@ DPI       = 600
 TOPN      = 12
 A_SIZE    = (7.5, 6)
 B_SIZE    = (7.5, 6)
+C_SIZE    = (5.5, 5)
 # ---------------------------------------
 
 FIGDIR = "data/processed/figures"
@@ -53,6 +54,7 @@ def cls(t): return SPECIES_CLASS.get(t, "?")
 
 con = pd.read_parquet(f"{FLUX}/full_taxa_contributions.parquet")
 tax = pd.read_parquet("data/processed/taxonomy_micom.parquet")
+tax["taxon"] = tax["id"].str.replace(" ", "_", regex=False)
 smeta = tax[["sample_id", "cohort"]].drop_duplicates("sample_id")
 con = con.merge(smeta, on="sample_id", how="left")
 con = con[con.cohort.isin(PRIMARY)]
@@ -104,8 +106,40 @@ def panel_B(fname):
     print(f"  {fname}.{FMT}  demoted (<0.7x): {[top[i].replace('_',' ') for i in np.where(drop)[0]]}")
 
 
+def panel_C(fname):
+    """Per-sample uniform vs class-weighted capacity: re-weighting preserves the patient ranking."""
+    from scipy.stats import spearmanr
+    carr = (con[["sample_id", "taxon", "cohort"]].drop_duplicates(["sample_id", "taxon"])
+            .merge(tax[["sample_id", "taxon", "abundance"]], on=["sample_id", "taxon"], how="left")
+            .dropna(subset=["abundance"]))
+    carr["eff"] = carr["taxon"].map(eff)
+    uni = carr.groupby("sample_id")["abundance"].sum().mul(100).rename("uni")
+    carr["w"] = carr["abundance"] * carr["eff"]
+    ref = carr.groupby("sample_id")["w"].sum().mul(100).rename("ref")
+    d = pd.concat([uni, ref], axis=1).reset_index().merge(smeta, on="sample_id", how="left")
+    d = d[d.cohort.isin(PRIMARY)]
+    rho = spearmanr(d["uni"], d["ref"]).correlation
+
+    fig, ax = plt.subplots(figsize=C_SIZE)
+    for coh in order:
+        g = d[d.cohort == coh]
+        ax.scatter(g["uni"], g["ref"], s=8, alpha=0.5, color=palette[coh], edgecolor="none", label=coh)
+    lim = max(d["uni"].max(), d["ref"].max()) * 1.05
+    ax.plot([0, lim], [0, lim], "--", color="0.4", lw=1, zorder=1, label="y = x")
+    ax.set_xlim(0, lim); ax.set_ylim(0, lim); ax.set_aspect("equal")
+    ax.set_xlabel("uniform per-sample capacity (relative units)")
+    ax.set_ylabel("class-weighted per-sample capacity (relative units)")
+    ax.text(0.04, 0.96, f"Spearman ρ = {rho:.2f}  (n = {len(d)})", transform=ax.transAxes,
+            va="top", ha="left", fontsize=9,
+            bbox=dict(boxstyle="round,pad=0.3", fc="white", ec="0.7", alpha=0.85))
+    ax.legend(fontsize=6, loc="lower right", ncol=1, frameon=True)
+    plt.tight_layout(); plt.savefig(f"{fname}.{FMT}", dpi=DPI); plt.close()
+    print(f"  {fname}.{FMT}  Spearman(uniform, weighted) = {rho:.3f}  (n={len(d)})")
+
+
 if __name__ == "__main__":
     os.makedirs(FIGDIR, exist_ok=True)
     print("Panel A (drivers, stacked by cohort):"); panel_A(f"{FIGDIR}/results_R4_A_drivers")
     print("Panel B (uniform vs class-weighted):"); panel_B(f"{FIGDIR}/results_R4_B_reweight")
-    print("done -> 2 panels in", FIGDIR)
+    print("Panel C (per-sample uniform vs weighted):"); panel_C(f"{FIGDIR}/results_R4_C_persample")
+    print("done -> 3 panels in", FIGDIR)
