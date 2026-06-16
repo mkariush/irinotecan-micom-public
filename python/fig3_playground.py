@@ -20,10 +20,15 @@ RENDER_A   = True
 RENDER_B   = True
 RENDER_C   = True            # per-sample uniform vs class-weighted capacity scatter (ρ)
 TOPN       = 12
-C_SIZE     = (5.5, 5)
+C_SIZE     = (4, 3.5)
 NORMALIZE  = False          # Panel A: False = absolute stacked flux; True = proportional (100%) composition
 PALETTE    = "tab10"        # MUST match Fig 1
 THEME_CTX  = "paper"
+POINT_SIZE      = 12
+POINT_ALPHA     = 0.65
+POINT_EDGE      = "0.3"         # "none" or e.g. "0.3"
+POINT_LW        = 0.2
+POINT_NEUTRAL   = "0.35"
 A_SIZE     = (5.5, 4)
 B_SIZE     = (5.5, 4)
 BAR_EDGE   = "white"        # separator between cohort segments in Panel A
@@ -125,11 +130,11 @@ if RENDER_C:
     fig, ax = plt.subplots(figsize=C_SIZE)
     for coh in order:
         g = d[d.cohort == coh]
-        ax.scatter(g["uni"], g["ref"], s=8, alpha=0.5, color=palette[coh], edgecolor="none", label=coh)
+        ax.scatter(g["uni"], g["ref"], color=palette[coh], label=coh, s=POINT_SIZE, alpha=POINT_ALPHA,edgecolor=POINT_EDGE, linewidth=POINT_LW)
     lim = max(d["uni"].max(), d["ref"].max()) * 1.05
     ax.plot([0, lim], [0, lim], "--", color="0.4", lw=1, zorder=1, label="y = x")
     ax.set_xlim(0, lim); ax.set_ylim(0, lim); ax.set_aspect("equal")
-    ax.set_xlabel("uniform per-sample capacity (relative units)")
+    ax.set_xlabel("uniform per-sample\n capacity (relative units)")
     ax.set_ylabel("class-weighted per-sample capacity (relative units)")
     ax.text(0.04, 0.96, f"Spearman ρ = {rho:.2f}  (n = {len(d)})", transform=ax.transAxes,
             va="top", ha="left", fontsize=9, bbox=dict(boxstyle="round,pad=0.3", fc="white", ec="0.7", alpha=0.85))

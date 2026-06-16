@@ -16,17 +16,17 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 # ---------------- STYLE (edit me) ----------------
-FIGSIZE         = (6, 5.5)
+FIGSIZE         = (4, 3.5)
 PALETTE         = "tab10"        # MUST match Fig 1
 POINT_BY_COHORT = True           # True: colour points by cohort; False: neutral grey
 POINT_SIZE      = 12
-POINT_ALPHA     = 0.45
-POINT_EDGE      = "none"         # "none" or e.g. "0.3"
-POINT_LW        = 0.0
+POINT_ALPHA     = 0.65
+POINT_EDGE      = "0.3"         # "none" or e.g. "0.3"
+POINT_LW        = 0.2
 POINT_NEUTRAL   = "0.35"
 SHOW_FIT        = True
 FIT_COLOR       = "red"
-FIT_LW          = 1.6
+FIT_LW          = 1.5
 ANNOTATE        = True           # in-plot slope / r^2 text (instead of a title)
 SHOW_LEGEND     = True
 LEGEND_LOC      = "lower right"

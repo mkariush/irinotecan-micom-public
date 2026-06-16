@@ -15,7 +15,7 @@ from matplotlib.patches import Patch
 import seaborn as sns
 
 # ---------------- STYLE (edit me) ----------------
-FIGSIZE      = (12, 4.5)
+FIGSIZE      = (10, 4.5)
 PALETTE      = "tab10"       # MUST match Fig 1 for consistency
 VIOLIN_ALPHA = 0.2         # fill opacity of the violins
 VIOLIN_EDGE  = "0.25"       # outline + hatch colour
@@ -32,10 +32,10 @@ DPI          = 600
 # points overlay
 SHOW_POINTS     = True
 POINT_BY_COHORT = True       # True: points coloured by cohort (like Fig 1); False: neutral grey
-POINT_SIZE      = 2.5
-POINT_ALPHA     = 0.55
-POINT_EDGE      = "0.25"
-POINT_LW        = 0.15
+POINT_SIZE      = 4
+POINT_ALPHA     = 0.65
+POINT_EDGE      = "0.3"
+POINT_LW        = 0.2
 POINT_JITTER    = 0.08
 POINT_NEUTRAL   = "0.3"
 # -------------------------------------------------
@@ -56,7 +56,7 @@ cohort_palette = dict(zip(order, sns.color_palette(PALETTE, n_colors=len(order))
 
 fig, ax = plt.subplots(figsize=FIGSIZE)
 sns.violinplot(data=sub, x="cohort", y="sn38_capacity", hue="study_condition",
-               hue_order=["control", "CRC"], order=order, split=True,
+               hue_order=["control", "CRC"], order=order, split=False,
                cut=0, inner=INNER, linewidth=VIOLIN_LW, ax=ax,
                palette={"control": "0.8", "CRC": "0.8"})
 # cohort = colour; condition = texture (control solid, CRC hatched)
