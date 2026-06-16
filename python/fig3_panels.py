@@ -116,8 +116,11 @@ def panel_C(fname):
     uni = carr.groupby("sample_id")["abundance"].sum().mul(100).rename("uni")
     carr["w"] = carr["abundance"] * carr["eff"]
     ref = carr.groupby("sample_id")["w"].sum().mul(100).rename("ref")
-    d = pd.concat([uni, ref], axis=1).reset_index().merge(smeta, on="sample_id", how="left")
-    d = d[d.cohort.isin(PRIMARY)]
+    # all 1,509 primary samples; the 4 zero-carrier sit at the origin (0,0), as in Fig 2
+    d = (smeta[smeta.cohort.isin(PRIMARY)][["sample_id", "cohort"]]
+         .merge(uni.reset_index(), on="sample_id", how="left")
+         .merge(ref.reset_index(), on="sample_id", how="left")
+         .fillna({"uni": 0.0, "ref": 0.0}))
     rho = spearmanr(d["uni"], d["ref"]).correlation
 
     fig, ax = plt.subplots(figsize=C_SIZE)
