@@ -95,7 +95,7 @@ if RENDER_B:
     ax.barh(y - h/2, wt, height=h, color=["red" if d else "green" for d in drop])
     ax.set_yticks(y); ax.set_yticklabels([f"{t.replace('_', ' ')}  [{cls(t)}]" for t in top])
     ax.invert_yaxis()
-    ax.set_xlabel("summed β-glucuronidase flux across samples (relative units; ≈ carriage × uniform cap)")
+    ax.set_xlabel("summed β-glucuronidase flux across samples (relative units)")
     leg = [Patch(facecolor="0.6", label="uniform"), Patch(facecolor="green", label="class-weighted")]
     if drop.any():
         leg.append(Patch(facecolor="red", label="class-weighted, demoted (<0.7× uniform)"))
