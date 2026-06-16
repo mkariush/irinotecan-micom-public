@@ -91,14 +91,14 @@ def panel_B(fname):
     y = np.arange(len(top)); h = 0.38
     fig, ax = plt.subplots(figsize=B_SIZE)
     ax.barh(y + h/2, uni, height=h, color="0.6")
-    ax.barh(y - h/2, wt, height=h, color=["crimson" if d else "teal" for d in drop])
+    ax.barh(y - h/2, wt, height=h, color=["red" if d else "green" for d in drop])
     ax.set_yticks(y); ax.set_yticklabels([f"{t.replace('_', ' ')}  [{cls(t)}]" for t in top])
     ax.invert_yaxis()
     ax.set_xlabel("summed β-glucuronidase flux across samples (relative units; ≈ carriage × uniform cap)")
     leg = [Patch(facecolor="0.6", label="uniform"),
-           Patch(facecolor="teal", label="class-weighted")]
+           Patch(facecolor="green", label="class-weighted")]
     if drop.any():
-        leg.append(Patch(facecolor="crimson", label="class-weighted, demoted (<0.7× uniform)"))
+        leg.append(Patch(facecolor="red", label="class-weighted, demoted (<0.7× uniform)"))
     ax.legend(handles=leg, loc="lower right", fontsize=7.5, frameon=True)
     plt.tight_layout(); plt.savefig(f"{fname}.{FMT}", dpi=DPI); plt.close()
     print(f"  {fname}.{FMT}  demoted (<0.7x): {[top[i].replace('_',' ') for i in np.where(drop)[0]]}")
