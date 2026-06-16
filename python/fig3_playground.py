@@ -29,7 +29,7 @@ BAR_LW     = 0.3
 DEMOTE     = 0.7            # Panel B: weighted < DEMOTE x uniform -> crimson
 A_LEGEND_LOC = "lower right"
 B_LEGEND_LOC = "lower right"
-FMT        = "png"          # playground default; fig3_panels.py emits svg
+FMT        = "svg"          # playground default; fig3_panels.py emits svg
 DPI        = 600
 OUT_A      = "data/processed/figures/results_R4_A_drivers_TEST"
 OUT_B      = "data/processed/figures/results_R4_B_reweight_TEST"
@@ -79,8 +79,8 @@ if RENDER_A:
         ax.barh(y, vals, left=left, color=palette[coh], edgecolor=BAR_EDGE, linewidth=BAR_LW, label=coh)
         left += vals
     ax.set_yticks(y); ax.set_yticklabels([t.replace("_", " ") for t in top]); ax.invert_yaxis()
-    ax.set_xlabel("cohort share of contribution (%)" if NORMALIZE
-                  else "summed contribution to community SN-38 secretion (relative units)")
+    ax.set_xlabel("cohort share of β-glucuronidase flux (%)" if NORMALIZE
+                  else "summed β-glucuronidase flux across samples (relative units; ≈ carriage × uniform cap)")
     ax.legend(fontsize=7, loc=A_LEGEND_LOC, title="cohort", title_fontsize=7, frameon=True)
     plt.tight_layout(); plt.savefig(f"{OUT_A}.{FMT}", dpi=DPI); plt.close()
     print(f"Panel A -> {OUT_A}.{FMT}  (NORMALIZE={NORMALIZE}, TOPN={TOPN})")
@@ -95,7 +95,7 @@ if RENDER_B:
     ax.barh(y - h/2, wt, height=h, color=["crimson" if d else "teal" for d in drop])
     ax.set_yticks(y); ax.set_yticklabels([f"{t.replace('_', ' ')}  [{cls(t)}]" for t in top])
     ax.invert_yaxis()
-    ax.set_xlabel("summed contribution to community SN-38 secretion (relative units)")
+    ax.set_xlabel("summed β-glucuronidase flux across samples (relative units; ≈ carriage × uniform cap)")
     leg = [Patch(facecolor="0.6", label="uniform"), Patch(facecolor="teal", label="class-weighted")]
     if drop.any():
         leg.append(Patch(facecolor="crimson", label="class-weighted, demoted (<0.7× uniform)"))

@@ -78,7 +78,7 @@ def panel_A(fname):
         ax.barh(y, vals, left=left, color=palette[coh], edgecolor="white", linewidth=0.3, label=coh)
         left += vals
     ax.set_yticks(y); ax.set_yticklabels([t.replace("_", " ") for t in top]); ax.invert_yaxis()
-    ax.set_xlabel("summed contribution to community SN-38 secretion (relative units)")
+    ax.set_xlabel("summed β-glucuronidase flux across samples (relative units; ≈ carriage × uniform cap)")
     ax.legend(fontsize=7, loc="lower right", title="cohort", title_fontsize=7, frameon=True)
     plt.tight_layout(); plt.savefig(f"{fname}.{FMT}", dpi=DPI); plt.close()
     print(f"  {fname}.{FMT}  (top {len(top)} drivers, stacked by cohort)")
@@ -94,7 +94,7 @@ def panel_B(fname):
     ax.barh(y - h/2, wt, height=h, color=["crimson" if d else "teal" for d in drop])
     ax.set_yticks(y); ax.set_yticklabels([f"{t.replace('_', ' ')}  [{cls(t)}]" for t in top])
     ax.invert_yaxis()
-    ax.set_xlabel("summed contribution to community SN-38 secretion (relative units)")
+    ax.set_xlabel("summed β-glucuronidase flux across samples (relative units; ≈ carriage × uniform cap)")
     leg = [Patch(facecolor="0.6", label="uniform"),
            Patch(facecolor="teal", label="class-weighted")]
     if drop.any():
