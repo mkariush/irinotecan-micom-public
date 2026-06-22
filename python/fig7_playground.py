@@ -26,7 +26,8 @@ GRID_N     = 60             # heatmap resolution
 D_RANGE    = (-6, -2)       # log10 substrate delivery D (mmol/gDW/h)
 CAP_RANGE  = (-2, 1.0)      # log10 community-capacity median (mmol/gDW/h)
 D_BOX      = (1e-5, 1e-4)   # plausible delivery (Slatter mass-balance: avg -> peak)
-CAP_BOX    = (0.05, 2.75)   # plausible capacity (Guthrie low -> high metabolizer)
+CAP_BOX    = (0.05, 2.75)   # Guthrie 2017: high=high-metab midpoint (~52%); low=low-metab near-bottom
+                            # (~1%, CONSERVATIVE; low-metab midpoint ~4.4% would give ~0.24)
 D_AVG      = 1e-5           # panel B: whole-gut average delivery
 PEAK_RANGE = (0, 5)         # panel B: log10 local-peak multiplier sweep
 PEAK_MARKS = [(1, "whole-gut avg", "tab:green"), (10, "plausible local", "tab:orange"),

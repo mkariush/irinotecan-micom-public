@@ -7,7 +7,9 @@ capacity_i < D (capacity-limited / "protected"); host-gated where capacity_i > D
 
 ANCHORS (real units, mmol/gDW/h), all order-of-magnitude:
   Capacity (Guthrie 2017 ex-vivo, 100 uM SN-38G, 200 ug/ml protein, ~0.55 g protein/gDW):
-     low metabolizer ~0.05, high ~2.75. -> plausible community-capacity MEDIAN band ~0.05-2.75.
+     high = high-metabolizer MIDPOINT (~52% conv) -> ~2.75; low = low-metabolizer near bottom of range
+     (~1% conv) -> ~0.05 (CONSERVATIVE; low-metabolizer midpoint ~4.4% would give ~0.24).
+     -> plausible community-capacity MEDIAN band ~0.05-2.75 mmol/gDW/h.
   Delivery D (Slatter mass-balance: ~0.02-0.05 mmol SN-38G to gut/dose, /~1 day, /~60 gDW biomass):
      ~1e-5 (avg) to ~1e-4 (peak); widen to 1e-6..1e-3 for uncertainty (dose, UGT1A1, local peaks).
 Output: heatmap of % communities capacity-limited over (D x capacity-scale); plausible box overlaid.
