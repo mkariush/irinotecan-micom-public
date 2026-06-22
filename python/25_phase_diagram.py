@@ -42,15 +42,15 @@ D_box   = (1e-5, 1e-4)      # delivery avg->peak
 cap_box = (0.05, 2.75)      # Guthrie low->high metabolizer
 
 fig, (ax, ax2) = plt.subplots(1, 2, figsize=(15, 6.5))
-im = ax.pcolormesh(np.log10(D_grid), np.log10(cap_grid), Z, cmap="RdYlBu_r", shading="auto", vmin=0, vmax=100)
+im = ax.pcolormesh(D_grid, cap_grid, Z, cmap="RdYlBu_r", shading="auto", vmin=0, vmax=100)
+ax.set_xscale("log"); ax.set_yscale("log")          # actual values on the axes, not log10
 cb = fig.colorbar(im, ax=ax); cb.set_label("% communities CAPACITY-limited (composition matters)")
-ax.add_patch(plt.Rectangle((np.log10(D_box[0]), np.log10(cap_box[0])),
-             np.log10(D_box[1])-np.log10(D_box[0]), np.log10(cap_box[1])-np.log10(cap_box[0]),
+ax.add_patch(plt.Rectangle((D_box[0], cap_box[0]), D_box[1]-D_box[0], cap_box[1]-cap_box[0],
              fill=False, edgecolor="k", lw=2.5, ls="--"))
-ax.text(np.log10(np.sqrt(D_box[0]*D_box[1])), np.log10(np.sqrt(cap_box[0]*cap_box[1])),
+ax.text(np.sqrt(D_box[0]*D_box[1]), np.sqrt(cap_box[0]*cap_box[1]),
         "physiologically\nplausible", ha="center", va="center", fontsize=10, fontweight="bold")
-ax.set_xlabel("log10  substrate delivery D  (mmol/gDW/h)")
-ax.set_ylabel("log10  community capacity median  (mmol/gDW/h)")
+ax.set_xlabel("substrate delivery D  (mmol gDW$^{-1}$ h$^{-1}$)")
+ax.set_ylabel("community capacity median  (mmol gDW$^{-1}$ h$^{-1}$)")
 # title removed -- interpretive content (blue=host-gated, red=composition-controlled) is in the caption
 
 # Panel (b): local-peak sensitivity -- how far above average delivery before composition matters?

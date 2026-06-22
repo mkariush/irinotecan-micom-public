@@ -21,7 +21,7 @@ FMT        = "svg"          # "png" quick view | "svg" Inkscape deliverable | "p
 DPI        = 600
 A_SIZE     = (4.5, 4)
 B_SIZE     = (4.5, 4)
-CMAP       = "RdYlBu_r"     # blue = host-gated, red = composition-controlled
+CMAP       = "RdYlBu_r"     # blue = host-gated, red = composition-controlled 
 GRID_N     = 60             # heatmap resolution
 D_RANGE    = (-6, -2)       # log10 substrate delivery D (mmol/gDW/h)
 CAP_RANGE  = (-2, 1.0)      # log10 community-capacity median (mmol/gDW/h)
@@ -58,15 +58,15 @@ if RENDER_A:
     cap_grid = np.logspace(*CAP_RANGE, GRID_N)
     Z = np.array([[frac_capacity_limited(cm, d) for d in D_grid] for cm in cap_grid])
     fig, ax = plt.subplots(figsize=A_SIZE)
-    im = ax.pcolormesh(np.log10(D_grid), np.log10(cap_grid), Z, cmap=CMAP, shading="auto", vmin=0, vmax=100)
+    im = ax.pcolormesh(D_grid, cap_grid, Z, cmap=CMAP, shading="auto", vmin=0, vmax=100)
+    ax.set_xscale("log"); ax.set_yscale("log")        # actual values on the axes, not log10
     cb = fig.colorbar(im, ax=ax); cb.set_label("% communities CAPACITY-limited\n (composition matters)")
-    ax.add_patch(plt.Rectangle((np.log10(D_BOX[0]), np.log10(CAP_BOX[0])),
-                 np.log10(D_BOX[1]) - np.log10(D_BOX[0]), np.log10(CAP_BOX[1]) - np.log10(CAP_BOX[0]),
+    ax.add_patch(plt.Rectangle((D_BOX[0], CAP_BOX[0]), D_BOX[1] - D_BOX[0], CAP_BOX[1] - CAP_BOX[0],
                  fill=False, edgecolor="k", lw=2.5, ls="--"))
-    ax.text(np.log10(np.sqrt(D_BOX[0] * D_BOX[1])), np.log10(np.sqrt(CAP_BOX[0] * CAP_BOX[1])),
+    ax.text(np.sqrt(D_BOX[0] * D_BOX[1]), np.sqrt(CAP_BOX[0] * CAP_BOX[1]),
             "physiologically\nplausible", ha="center", va="center", fontsize=10, fontweight="bold")
-    ax.set_xlabel("log10  substrate delivery D  (mmol/gDW/h)")
-    ax.set_ylabel("log10  community capacity median  (mmol/gDW/h)")
+    ax.set_xlabel("substrate delivery D  (mmol gDW$^{-1}$ h$^{-1}$)")
+    ax.set_ylabel("community capacity median  (mmol gDW$^{-1}$ h$^{-1}$)")
     if SHOW_TITLE:
         ax.set_title(A_TITLE)
     plt.tight_layout(); plt.savefig(f"{OUT_A}.{FMT}", dpi=DPI); plt.close()
