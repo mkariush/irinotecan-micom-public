@@ -31,7 +31,7 @@ D_AVG      = 1e-5           # panel B: whole-gut average delivery
 PEAK_RANGE = (0, 5)         # panel B: log10 local-peak multiplier sweep
 PEAK_MARKS = [(1, "whole-gut avg", "tab:green"), (10, "plausible local", "tab:orange"),
               (100, "high local", "tab:orange")]
-SHOW_TITLE = True
+SHOW_TITLE = False         # titles moved to the figure caption (publication style)
 A_TITLE    = ("(a) Regime map: when does composition control reactivation?\n"
              "blue = host-gated (delivery-limited) | red = microbiome-controlled")
 B_TITLE    = "(b) How large a LOCAL PEAK before composition matters?\n(central Guthrie capacity)"

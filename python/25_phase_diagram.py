@@ -49,8 +49,7 @@ ax.text(np.log10(np.sqrt(D_box[0]*D_box[1])), np.log10(np.sqrt(cap_box[0]*cap_bo
         "physiologically\nplausible", ha="center", va="center", fontsize=10, fontweight="bold")
 ax.set_xlabel("log10  substrate delivery D  (mmol/gDW/h)")
 ax.set_ylabel("log10  community capacity median  (mmol/gDW/h)")
-ax.set_title("(a) Regime map: when does composition control reactivation?\n"
-             "blue = host-gated (delivery-limited) | red = microbiome-controlled")
+# title removed -- interpretive content (blue=host-gated, red=composition-controlled) is in the caption
 
 # Panel (b): local-peak sensitivity -- how far above average delivery before composition matters?
 D_AVG = 1e-5
@@ -63,7 +62,7 @@ for m_lab, lab, c in [(1,"whole-gut avg","tab:green"), (10,"plausible local","ta
     ax2.axvline(m_lab, color=c, ls=":", lw=1.2); ax2.text(m_lab, 102, lab, rotation=90, va="bottom", ha="right", fontsize=8, color=c)
 ax2.set_xscale("log"); ax2.set_xlabel("local peak delivery / whole-gut average  (multiplier)")
 ax2.set_ylabel("% communities capacity-limited (composition matters)")
-ax2.set_title("(b) How large a LOCAL PEAK before composition matters?\n(central Guthrie capacity)")
+# title removed -- "(b) local-peak sensitivity, central Guthrie capacity" is in the caption
 ax2.set_ylim(-2, 105)
 plt.tight_layout(); plt.savefig("data/processed/figures/results_phase_diagram.png", dpi=200); plt.close()
 
