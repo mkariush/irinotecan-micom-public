@@ -17,10 +17,10 @@ import matplotlib.pyplot as plt
 # ---------------- STYLE (edit me) ----------------
 RENDER_A   = True
 RENDER_B   = True
-FMT        = "png"          # "png" quick view | "svg" Inkscape deliverable | "pdf"
+FMT        = "svg"          # "png" quick view | "svg" Inkscape deliverable | "pdf"
 DPI        = 600
-A_SIZE     = (7, 6)
-B_SIZE     = (7, 6)
+A_SIZE     = (4.5, 4)
+B_SIZE     = (4.5, 4)
 CMAP       = "RdYlBu_r"     # blue = host-gated, red = composition-controlled
 GRID_N     = 60             # heatmap resolution
 D_RANGE    = (-6, -2)       # log10 substrate delivery D (mmol/gDW/h)
@@ -58,7 +58,7 @@ if RENDER_A:
     Z = np.array([[frac_capacity_limited(cm, d) for d in D_grid] for cm in cap_grid])
     fig, ax = plt.subplots(figsize=A_SIZE)
     im = ax.pcolormesh(np.log10(D_grid), np.log10(cap_grid), Z, cmap=CMAP, shading="auto", vmin=0, vmax=100)
-    cb = fig.colorbar(im, ax=ax); cb.set_label("% communities CAPACITY-limited (composition matters)")
+    cb = fig.colorbar(im, ax=ax); cb.set_label("% communities CAPACITY-limited\n (composition matters)")
     ax.add_patch(plt.Rectangle((np.log10(D_BOX[0]), np.log10(CAP_BOX[0])),
                  np.log10(D_BOX[1]) - np.log10(D_BOX[0]), np.log10(CAP_BOX[1]) - np.log10(CAP_BOX[0]),
                  fill=False, edgecolor="k", lw=2.5, ls="--"))
@@ -79,9 +79,10 @@ if RENDER_B:
     ax2.plot(mult, fr, lw=2, color="tab:purple")
     for m_lab, lab, c in PEAK_MARKS:
         ax2.axvline(m_lab, color=c, ls=":", lw=1.2)
-        ax2.text(m_lab, 102, lab, rotation=90, va="bottom", ha="right", fontsize=8, color=c)
+        ax2.text(m_lab, 102, lab, rotation=45, va="bottom", ha="left", fontsize=10, color=c)
     ax2.set_xscale("log"); ax2.set_xlabel("local peak delivery / whole-gut average  (multiplier)")
-    ax2.set_ylabel("% communities capacity-limited (composition matters)")
+    ax2.set_ylabel("% communities CAPACITY-limited\n (composition matters)")
+    ax2.yaxis.set_label_position("right"); ax2.yaxis.tick_right()   # y-axis on the right
     if SHOW_TITLE:
         ax2.set_title(B_TITLE)
     ax2.set_ylim(-2, 105)

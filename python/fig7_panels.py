@@ -83,6 +83,7 @@ def panel_B(stem):
         ax2.text(m_lab, 102, lab, rotation=90, va="bottom", ha="right", fontsize=8, color=c)
     ax2.set_xscale("log"); ax2.set_xlabel("local peak delivery / whole-gut average  (multiplier)")
     ax2.set_ylabel("% communities capacity-limited (composition matters)")
+    ax2.yaxis.set_label_position("right"); ax2.yaxis.tick_right()   # y-axis on the right
     ax2.set_ylim(-2, 105)
     plt.tight_layout()
     for fmt in ("svg", "png"):
