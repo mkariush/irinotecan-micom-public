@@ -28,7 +28,8 @@ CAP_RANGE  = (-2, 1.0)      # log10 community-capacity median (mmol/gDW/h)
 D_BOX      = (1e-5, 1e-4)   # plausible delivery (Slatter mass-balance: avg -> peak)
 CAP_BOX    = (0.05, 2.85)   # Guthrie 2017: high=high-metab midpoint (~52%); low=low-metab near-bottom
                             # (~1%, CONSERVATIVE; low-metab midpoint ~4.4% would give ~0.24)
-D_AVG      = 1e-5           # panel B: whole-gut average delivery
+D_AVG      = float(np.sqrt(D_BOX[0] * D_BOX[1]))   # panel B baseline: geometric-mean of the delivery
+                                                  # band (~3.16e-5), symmetric with geometric-mean capacity
 PEAK_RANGE = (0, 5)         # panel B: log10 local-peak multiplier sweep
 PEAK_MARKS = [(1, "whole-gut avg", "tab:green"), (10, "plausible local", "tab:orange"),
               (100, "high local", "tab:orange")]
@@ -62,9 +63,16 @@ if RENDER_A:
     ax.set_xscale("log"); ax.set_yscale("log")        # actual values on the axes, not log10
     cb = fig.colorbar(im, ax=ax); cb.set_label("% communities CAPACITY-limited\n (composition matters)")
     ax.add_patch(plt.Rectangle((D_BOX[0], CAP_BOX[0]), D_BOX[1] - D_BOX[0], CAP_BOX[1] - CAP_BOX[0],
-                 fill=False, edgecolor="k", lw=2.5, ls="--"))
+                 fill=False, edgecolor="white", lw=2.5, ls="--"))
     ax.text(np.sqrt(D_BOX[0] * D_BOX[1]), np.sqrt(CAP_BOX[0] * CAP_BOX[1]),
-            "physiologically\nplausible", ha="center", va="center", fontsize=10, fontweight="bold")
+            "physiologically\nplausible", ha="center", va="center", color="white",
+            fontsize=10, fontweight="bold")
+    # measured-anchor values on the box edges (white): capacity left, delivery bottom
+    akw = dict(color="white", fontsize=8, fontweight="bold")
+    ax.text(D_BOX[0] * 0.7, CAP_BOX[1], f"{CAP_BOX[1]:g}", ha="right", va="center", **akw)
+    ax.text(D_BOX[0] * 0.7, CAP_BOX[0], f"{CAP_BOX[0]:g}", ha="right", va="center", **akw)
+    ax.text(D_BOX[0], CAP_BOX[0] * 0.65, r"$10^{-5}$", ha="center", va="top", **akw)
+    ax.text(D_BOX[1], CAP_BOX[0] * 0.65, r"$10^{-4}$", ha="center", va="top", **akw)
     ax.set_xlabel("substrate delivery D  (mmol gDW$^{-1}$ h$^{-1}$)")
     ax.set_ylabel("community capacity median  (mmol gDW$^{-1}$ h$^{-1}$)")
     if SHOW_TITLE:

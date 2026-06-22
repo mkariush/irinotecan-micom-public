@@ -46,15 +46,21 @@ im = ax.pcolormesh(D_grid, cap_grid, Z, cmap="RdYlBu_r", shading="auto", vmin=0,
 ax.set_xscale("log"); ax.set_yscale("log")          # actual values on the axes, not log10
 cb = fig.colorbar(im, ax=ax); cb.set_label("% communities CAPACITY-limited (composition matters)")
 ax.add_patch(plt.Rectangle((D_box[0], cap_box[0]), D_box[1]-D_box[0], cap_box[1]-cap_box[0],
-             fill=False, edgecolor="k", lw=2.5, ls="--"))
+             fill=False, edgecolor="white", lw=2.5, ls="--"))
 ax.text(np.sqrt(D_box[0]*D_box[1]), np.sqrt(cap_box[0]*cap_box[1]),
-        "physiologically\nplausible", ha="center", va="center", fontsize=10, fontweight="bold")
+        "physiologically\nplausible", ha="center", va="center", color="white", fontsize=10, fontweight="bold")
+# measured-anchor values on the box edges (white): capacity left, delivery bottom
+akw = dict(color="white", fontsize=8, fontweight="bold")
+ax.text(D_box[0]*0.7, cap_box[1], f"{cap_box[1]:g}", ha="right", va="center", **akw)
+ax.text(D_box[0]*0.7, cap_box[0], f"{cap_box[0]:g}", ha="right", va="center", **akw)
+ax.text(D_box[0], cap_box[0]*0.65, r"$10^{-5}$", ha="center", va="top", **akw)
+ax.text(D_box[1], cap_box[0]*0.65, r"$10^{-4}$", ha="center", va="top", **akw)
 ax.set_xlabel("substrate delivery D  (mmol gDW$^{-1}$ h$^{-1}$)")
 ax.set_ylabel("community capacity median  (mmol gDW$^{-1}$ h$^{-1}$)")
 # title removed -- interpretive content (blue=host-gated, red=composition-controlled) is in the caption
 
 # Panel (b): local-peak sensitivity -- how far above average delivery before composition matters?
-D_AVG = 1e-5
+D_AVG = float(np.sqrt(D_box[0]*D_box[1]))   # geometric-mean delivery baseline (~3.16e-5), symmetric w/ CAP_CENTRAL
 CAP_CENTRAL = float(np.sqrt(cap_box[0]*cap_box[1]))   # Guthrie geometric-mean capacity
 mult = np.logspace(0, 5, 200)                         # local-peak multiplier over whole-gut average
 fr = np.array([frac_capacity_limited(CAP_CENTRAL, D_AVG*m) for m in mult])
