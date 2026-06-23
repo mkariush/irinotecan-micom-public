@@ -1,15 +1,18 @@
-"""Fig 5 as FOUR standalone panels (SVG, for external composition in Inkscape).
+"""Fast Fig 4 (manuscript) = R5 (CRC vs control) playground -- FOUR separate panels for Inkscape.
 
-  A  results_R5_A_violin.svg              CRC vs control capacity by cohort (cohort colour + CRC hatch + points)
-  B  results_R5_B_forest_primary.svg      forest: Cliff's delta, 9 primary cohorts, uniform capacity
-  C  results_R5_C_forest_reweighted.svg   forest: same, efficiency-class-reweighted capacity
-  D  results_R5_D_forest_sensitivity.svg  forest: uniform capacity + GuptaA_2019 & HanniganGD_2017 (grey)
+  A  results_R5_A_violin_TEST              CRC vs control capacity by cohort (cohort colour + CRC hatch + points)
+  B  results_R5_B_forest_primary_TEST      forest: Cliff's delta, 9 primary cohorts, uniform capacity
+  C  results_R5_C_forest_reweighted_TEST   forest: same, efficiency-class-reweighted capacity
+  D  results_R5_D_forest_sensitivity_TEST  forest: uniform + GuptaA_2019 & HanniganGD_2017 (grey)
 
-Forest math reused from 14_forest.py (Cliff's delta + 2000x bootstrap CI + n-weighted pooled diamond);
-efficiency weighting reused from 13_r6_refined.py. Bootstrap stats are CACHED to
-data/processed/flux/r5_forest_*.parquet -> set RECOMPUTE=True to refresh; style tweaks reuse the cache.
+Mirrors python/fig5_panels.py (the canonical Fig 4 producer; legacy name = one higher than the
+manuscript figure after the old Fig 3 was dropped). Edit STYLE, run, view the *_TEST files, then port
+your tweaks back into fig5_panels.py.
 
-    python python/fig5_panels.py
+Bootstrap stats are CACHED to data/processed/flux/r5_forest_*.parquet, so panel B/C/D STYLE tweaks are
+instant. Set RECOMPUTE=True ONCE if the underlying capacities change (slow: 2000x bootstrap x forests).
+
+    python python/fig4_playground.py
 """
 
 import os
@@ -22,13 +25,18 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Patch
 import seaborn as sns
 
-# ---------------- STYLE ----------------
-FMT          = "svg"           # "svg" (vector, for Inkscape) | "pdf" | "png"
+# ---------------- STYLE (edit me) ----------------
+RENDER_A     = True            # CRC vs control violins
+RENDER_B     = True            # forest, primary, uniform capacity
+RENDER_C     = True            # forest, primary, efficiency-reweighted
+RENDER_D     = True            # forest, + depth-sensitivity cohorts
+FMT          = "svg"           # "png" quick view | "svg" Inkscape deliverable | "pdf"
+DPI          = 600             # only matters for png
 PALETTE      = "tab10"         # MUST match Fig 1
 THEME_CTX    = "paper"
-DPI          = 600             # only matters for png
+SHOW_TITLE   = False            # forest panel titles; set False for caption-only (publication) style
 # panel A (violin)
-A_SIZE       = (10, 4.5)
+A_SIZE       = (9, 4.5)
 VIOLIN_ALPHA = 0.2
 VIOLIN_EDGE  = "0.25"
 VIOLIN_LW    = 0.8
@@ -39,14 +47,15 @@ POINT_EDGE   = "0.3"
 POINT_LW     = 0.2
 POINT_JITTER = 0.08
 # panels B/C/D (forest)
-FOREST_SIZE  = (5.5, 4.5)
-XLIM         = (-0.8, 0.8)
+FOREST_SIZE  = (4.3, 4)
+XLIM         = (-0.85, 0.85)
 SENS_GREY    = {"GuptaA_2019": "0.55", "HanniganGD_2017": "0.72"}   # significance shown by asterisk on label only
-# bootstrap
+POOL_COLOR   = "navy"
+# bootstrap (leave RECOMPUTE False to reuse the cache; flip True only if capacities changed)
 BOOT         = 2000
 RECOMPUTE    = False
 SEED         = 0
-# ---------------------------------------
+# -------------------------------------------------
 
 FIGDIR = "data/processed/figures"
 FLUX   = "data/processed/flux"
@@ -136,7 +145,7 @@ def forest_stats(value_col, cohorts, key):
     df.to_parquet(path)
     return df
 
-def draw_forest(df, cohort_order, fname, title, xlabel=True):
+def draw_forest(df, cohort_order, fname, title):
     rows = df[df.cohort != "__pooled__"].set_index("cohort")
     present = [c for c in cohort_order if c in rows.index]
     ypos = np.arange(len(present))[::-1]
@@ -149,23 +158,23 @@ def draw_forest(df, cohort_order, fname, title, xlabel=True):
     yb = -1.4
     pr = df[df.cohort == "__pooled__"].iloc[0]
     ax.add_patch(plt.Polygon([[pr.lo, yb], [pr.delta, yb + 0.3], [pr.hi, yb], [pr.delta, yb - 0.3]],
-                             color="navy", zorder=5))
+                             color=POOL_COLOR, zorder=5))
     ax.axvline(0, color="k", lw=1, ls="--", zorder=1)
     labels = [c.replace("_", " ") + ("  *" if rows.loc[c].p < 0.05 else "") for c in present]
     ax.set_yticks(list(ypos) + [yb]); ax.set_yticklabels(labels + ["Pooled (n-weighted)"])
     ax.set_xlim(*XLIM); ax.set_ylim(yb - 0.9, len(present) - 0.3)
-    if xlabel:
-        ax.set_xlabel("Cliff's δ   (← CRC higher    |    control higher →)")
-    ax.set_title(title, fontsize=10)
-    plt.tight_layout(); plt.savefig(f"{fname}.{FMT}", dpi=DPI); plt.close()
-    print(f"  {fname}.{FMT}  pooled δ={pr.delta:.3f} [{pr.lo:.3f},{pr.hi:.3f}]")
+    ax.set_xlabel("Cliff's δ   (← CRC higher    |    control higher →)")
+    if SHOW_TITLE:
+        ax.set_title(title, fontsize=10)
+    plt.tight_layout(); plt.savefig(f"{fname}_TEST.{FMT}", dpi=DPI); plt.close()
+    print(f"  {fname}_TEST.{FMT}  pooled δ={pr.delta:.3f} [{pr.lo:.3f},{pr.hi:.3f}]")
 
 def draw_violin(fname):
     sub = cap[cap.cohort.isin(PRIMARY) & cap.study_condition.isin(["CRC", "control"])].copy()
     fig, ax = plt.subplots(figsize=A_SIZE)
     sns.violinplot(data=sub, x="cohort", y="sn38_capacity", hue="study_condition",
-                   hue_order=["control", "CRC"], order=order, split=True, cut=0,
-                   inner="quartile", linewidth=VIOLIN_LW, ax=ax,
+                   hue_order=["control", "CRC"], order=order, split=False, cut=0,
+                   inner="quartile", linewidth=VIOLIN_LW, ax=ax, saturation = 1,
                    palette={"control": "0.8", "CRC": "0.8"})
     for coll in ax.collections:
         paths = coll.get_paths()
@@ -194,20 +203,24 @@ def draw_violin(fname):
     ax.legend(handles=[Patch(facecolor="0.8", edgecolor=VIOLIN_EDGE, label="control"),
                        Patch(facecolor="0.8", edgecolor=VIOLIN_EDGE, hatch=HATCH, label="CRC")],
               title="", loc="upper left", fontsize=9, frameon=True)
-    plt.tight_layout(); plt.savefig(f"{fname}.{FMT}", dpi=DPI); plt.close()
-    print(f"  {fname}.{FMT}  (violin, n={len(sub)})")
+    plt.tight_layout(); plt.savefig(f"{fname}_TEST.{FMT}", dpi=DPI); plt.close()
+    print(f"  {fname}_TEST.{FMT}  (violin, n={len(sub)})")
 
 if __name__ == "__main__":
     os.makedirs(FIGDIR, exist_ok=True)
-    print("Panel A:"); draw_violin(f"{FIGDIR}/results_R5_A_violin")
-    print("Panel B (primary, uniform):")
-    draw_forest(forest_stats("sn38_capacity", PRIMARY, "primary_uniform"),
-                order, f"{FIGDIR}/results_R5_B_forest_primary", "Uniform capacity (9 primary cohorts)")
-    print("Panel C (primary, efficiency-reweighted):")
-    draw_forest(forest_stats("cap_ref", PRIMARY, "primary_reweighted"),
-                order, f"{FIGDIR}/results_R5_C_forest_reweighted", "Efficiency-class-reweighted capacity")
-    print("Panel D (uniform + depth-sensitivity cohorts):")
-    draw_forest(forest_stats("sn38_capacity", PRIMARY + SENSITIVITY, "with_sensitivity"),
-                order + SENSITIVITY, f"{FIGDIR}/results_R5_D_forest_sensitivity",
-                "+ depth-sensitivity cohorts (grey)")
-    print("done -> 4 panels in", FIGDIR)
+    if RENDER_A:
+        print("Panel A (CRC vs control violins):"); draw_violin(f"{FIGDIR}/results_R5_A_violin")
+    if RENDER_B:
+        print("Panel B (primary, uniform):")
+        draw_forest(forest_stats("sn38_capacity", PRIMARY, "primary_uniform"),
+                    order, f"{FIGDIR}/results_R5_B_forest_primary", "Uniform capacity (9 primary cohorts)")
+    if RENDER_C:
+        print("Panel C (primary, efficiency-reweighted):")
+        draw_forest(forest_stats("cap_ref", PRIMARY, "primary_reweighted"),
+                    order, f"{FIGDIR}/results_R5_C_forest_reweighted", "Efficiency-class-reweighted capacity")
+    if RENDER_D:
+        print("Panel D (uniform + depth-sensitivity cohorts):")
+        draw_forest(forest_stats("sn38_capacity", PRIMARY + SENSITIVITY, "with_sensitivity"),
+                    order + SENSITIVITY, f"{FIGDIR}/results_R5_D_forest_sensitivity",
+                    "+ depth-sensitivity cohorts (grey)")
+    print("done -> TEST panels in", FIGDIR)
