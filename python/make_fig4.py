@@ -39,6 +39,7 @@ VIOLIN_ALPHA = 0.2
 VIOLIN_EDGE  = "0.25"
 VIOLIN_LW    = 0.8
 HATCH        = "////"
+HATCH_LW     = 1.5             # hatch line thickness (raise to make the CRC hatch heavier/darker)
 POINT_SIZE   = 4
 POINT_ALPHA  = 0.65
 POINT_EDGE   = "0.3"
@@ -154,6 +155,7 @@ def draw_forest(df, cohort_order, fname, title):
     print(f"  {fname}.{FMT}  pooled δ={pr.delta:.3f} [{pr.lo:.3f},{pr.hi:.3f}]")
 
 def draw_violin(fname):
+    plt.rcParams["hatch.linewidth"] = HATCH_LW
     sub = cap[cap.cohort.isin(PRIMARY) & cap.study_condition.isin(["CRC", "control"])].copy()
     fig, ax = plt.subplots(figsize=A_SIZE)
     sns.violinplot(data=sub, x="cohort", y="sn38_capacity", hue="study_condition",
