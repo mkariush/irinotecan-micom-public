@@ -1,10 +1,13 @@
-"""Fast Fig 3 (driver taxa, R4) playground -- iterate on STYLE without touching fig3_panels.py.
+"""Fig 3 -- driver taxa (Results R4): three standalone SVG panels for Inkscape composition.
 
-Renders Panel A (drivers stacked by cohort) and/or Panel B (uniform vs class-weighted) to * files.
-Panel A supports NORMALIZE: absolute stacked flux (False) or proportional 100% composition (True, which
-removes the cohort-sample-count effect). Edit the STYLE block, run, look at the PNGs.
+  A  results_R4_A_drivers     top driver taxa, each bar stacked by cohort (pan-cohort commensals)
+  B  results_R4_B_reweight    same taxa, uniform vs enzyme-class-weighted contribution
+  C  results_R4_C_persample   per-sample uniform vs class-weighted capacity (Spearman rho)
 
-    python python/fig3_playground.py
+Panel A supports NORMALIZE (absolute stacked flux vs proportional 100%% composition). Edit the STYLE
+block to adjust. Emits the three results_R4_*.svg panels.
+
+    python python/make_fig3.py
 """
 import os
 import numpy as np
@@ -36,7 +39,7 @@ BAR_LW     = 0.3
 DEMOTE     = 0.7            # Panel B: weighted < DEMOTE x uniform -> crimson
 A_LEGEND_LOC = "lower right"
 B_LEGEND_LOC = "lower right"
-FMT        = "svg"          # playground default; fig3_panels.py emits svg
+FMT        = "svg"          # vector output for Inkscape composition
 DPI        = 600
 OUT_A      = "data/processed/figures/results_R4_A_drivers"
 OUT_B      = "data/processed/figures/results_R4_B_reweight"

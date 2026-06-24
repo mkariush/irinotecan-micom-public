@@ -1,10 +1,10 @@
-"""Fast Fig 1 (capacity-by-cohort) playground -- iterate on STYLE without re-running 10_results.py.
+"""Fig 1 -- predicted SN-38 reactivation capacity across cohorts (Results R1).
 
-Loads only full_capacity.parquet + cohort labels (no contributions, no stats). ~1 s per run.
-Edit the STYLE block, run, look at the PNG. When you like a setting, copy it back into 10_results.py
-so the canonical pipeline stays the source of truth.
+Violin + strip plot of per-sample capacity by cohort (tab10 palette, reused across figures).
+Loads full_capacity.parquet + cohort labels. Edit the STYLE block to adjust appearance.
+Emits data/processed/figures/results_R1_by_cohort.svg.
 
-    python python/fig1_playground.py
+    python python/make_fig1.py
 """
 
 import pandas as pd

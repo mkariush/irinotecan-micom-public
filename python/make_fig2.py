@@ -1,12 +1,10 @@
-"""Fast Fig 2 (capacity vs carrier abundance, R2) playground -- iterate on STYLE without re-running
-10_results.py.
+"""Fig 2 -- reactivation capacity vs summed GUS-carrier abundance (Results R2).
 
-Loads full_capacity.parquet + full_taxa_contributions.parquet + taxonomy (for carrier abundance).
 Scatter of summed GUS-carrier abundance (x) vs SN-38 capacity (y) with the linear fit; points coloured
 by cohort (same tab10 as Fig 1) so the P. copri / E. eligens below-line deviation (Yachida) is visible.
-Edit the STYLE block, run, look at the PNG. When you like it, copy the settings into 10_results.py.
+Edit the STYLE block to adjust. Emits data/processed/figures/results_R2_abundance.svg.
 
-    python python/fig2_playground.py
+    python python/make_fig2.py
 """
 
 import numpy as np, pandas as pd

@@ -1,15 +1,14 @@
-"""Fast Fig 6 (potential vs realized, R6) playground -- TWO SEPARATE panels, viridis 17b style.
+"""Fig 5 -- potential vs realized (Results R6): two standalone SVG panels for Inkscape composition.
 
-Renders Panel A (per-community collapse, coloured by saturating capacity) and Panel B (CV% +
-correlation vs supply) to SEPARATE * files, for external (Inkscape) composition. Same design as
-17b_q1_plot.py (the combined version), just split. Edit the STYLE block, run, view the PNGs.
+  A  results_R6_A_collapse    per-community collapse of realized reactivation, coloured by capacity
+  B  results_R6_B_metrics     between-individual CV%% and correlation-with-capacity vs supply
 
 Note on Panel B: at the limiting (low-supply) end, realized reactivation is ~constant across samples,
-so its correlation with capacity is ~0 (and noisy: it dips to about -0.07 at supply=4). That is the
-"touches zero then rises" you saw -- it is decoupling noise, not a real anticorrelation. CORR_YLIM
-controls whether the small negative is shown honestly (default) or floored at 0.
+so its correlation with capacity is ~0 (and noisy: it dips to about -0.07 at supply=4) -- decoupling
+noise, not a real anticorrelation. CORR_YLIM controls whether the small negative is shown (default) or
+floored at 0. Edit the STYLE block to adjust. Emits the two results_R6_*.svg panels.
 
-    python python/fig6_playground.py
+    python python/make_fig5.py
 """
 import numpy as np, pandas as pd
 import matplotlib; matplotlib.use("Agg")

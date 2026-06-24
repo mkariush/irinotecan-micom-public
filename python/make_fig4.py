@@ -1,18 +1,15 @@
-"""Fast Fig 4 (manuscript) = R5 (CRC vs control) playground -- FOUR separate panels for Inkscape.
+"""Fig 4 -- CRC vs control (Results R5): four standalone SVG panels for Inkscape composition.
 
   A  results_R5_A_violin              CRC vs control capacity by cohort (cohort colour + CRC hatch + points)
   B  results_R5_B_forest_primary      forest: Cliff's delta, 9 primary cohorts, uniform capacity
   C  results_R5_C_forest_reweighted   forest: same, efficiency-class-reweighted capacity
   D  results_R5_D_forest_sensitivity  forest: uniform + GuptaA_2019 & HanniganGD_2017 (grey)
 
-Mirrors python/fig5_panels.py (the canonical Fig 4 producer; legacy name = one higher than the
-manuscript figure after the old Fig 3 was dropped). Edit STYLE, run, view the * files, then port
-your tweaks back into fig5_panels.py.
+Bootstrap stats are cached to data/processed/flux/r5_forest_*.parquet, so STYLE tweaks are instant;
+set RECOMPUTE=True once if the underlying capacities change (slow: 2000x bootstrap x forests). Edit the
+STYLE block to adjust. Emits the four results_R5_*.svg panels.
 
-Bootstrap stats are CACHED to data/processed/flux/r5_forest_*.parquet, so panel B/C/D STYLE tweaks are
-instant. Set RECOMPUTE=True ONCE if the underlying capacities change (slow: 2000x bootstrap x forests).
-
-    python python/fig4_playground.py
+    python python/make_fig4.py
 """
 
 import os
@@ -223,4 +220,4 @@ if __name__ == "__main__":
         draw_forest(forest_stats("sn38_capacity", PRIMARY + SENSITIVITY, "with_sensitivity"),
                     order + SENSITIVITY, f"{FIGDIR}/results_R5_D_forest_sensitivity",
                     "+ depth-sensitivity cohorts (grey)")
-    print("done -> TEST panels in", FIGDIR)
+    print("done -> panels in", FIGDIR)

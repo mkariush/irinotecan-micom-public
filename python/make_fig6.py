@@ -1,14 +1,14 @@
-"""Fast Fig 6 (manuscript) = R7 phase diagram playground -- TWO SEPARATE panels for Inkscape.
+"""Fig 6 -- absolute placement / phase diagram (Results R7): two standalone SVG panels for Inkscape.
 
-Panel A (regime map): heatmap of % communities CAPACITY-limited (composition matters) over
+Panel A (regime map): heatmap of %% communities CAPACITY-limited (composition matters) over
   (substrate delivery D) x (community-capacity median), with the literature plausible box overlaid.
-Panel B (local-peak sensitivity): % capacity-limited vs local-peak/whole-gut-average multiplier.
+Panel B (local-peak sensitivity): %% capacity-limited vs local-peak/whole-gut-average multiplier.
 
-Uses the REAL 1,509-community relative-capacity DISTRIBUTION (shape fixed by data; only the absolute
-scale is swept). realized_i = min(D, capacity_i); composition matters where capacity_i < D.
-Mirrors 25_phase_diagram.py (the combined canonical). Writes * files. Edit STYLE, run, view.
+Uses the real 1,509-community relative-capacity distribution (shape fixed by data; only the absolute
+scale is swept). realized_i = min(D, capacity_i); composition matters where capacity_i < D. Edit the
+STYLE block to adjust. Emits the two results_R7_*.svg panels.
 
-    python python/fig7_playground.py
+    python python/make_fig6.py
 """
 import numpy as np, pandas as pd
 import matplotlib; matplotlib.use("Agg")
