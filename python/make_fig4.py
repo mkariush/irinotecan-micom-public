@@ -19,6 +19,7 @@ from scipy.stats import mannwhitneyu
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
 from matplotlib.patches import Patch
 import seaborn as sns
 
@@ -165,8 +166,10 @@ def draw_violin(fname):
             continue
         xc = paths[0].vertices[:, 0].mean(); ci = int(round(xc))
         if 0 <= ci < len(order):
-            coll.set_facecolor(cohort_palette[order[ci]]); coll.set_edgecolor(VIOLIN_EDGE)
-            coll.set_alpha(VIOLIN_ALPHA)
+            # alpha in the facecolor only -> fill stays translucent but the edge/hatch
+            # render at full opacity (set_alpha() would dim the hatch into invisibility)
+            coll.set_facecolor(mcolors.to_rgba(cohort_palette[order[ci]], VIOLIN_ALPHA))
+            coll.set_edgecolor(VIOLIN_EDGE)
             if xc > ci:
                 coll.set_hatch(HATCH)
     n_violin = len(ax.collections)
