@@ -27,3 +27,8 @@ renv/staging/
 .RData
 
 pdfs_lookup/
+
+# Working scratch (untracked, not part of the manuscript lock)
+notes/
+pdfs_lookup_GUS/
+Heinken_SuppData1_*.xlsx
