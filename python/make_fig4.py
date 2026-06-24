@@ -1,12 +1,12 @@
 """Fast Fig 4 (manuscript) = R5 (CRC vs control) playground -- FOUR separate panels for Inkscape.
 
-  A  results_R5_A_violin_TEST              CRC vs control capacity by cohort (cohort colour + CRC hatch + points)
-  B  results_R5_B_forest_primary_TEST      forest: Cliff's delta, 9 primary cohorts, uniform capacity
-  C  results_R5_C_forest_reweighted_TEST   forest: same, efficiency-class-reweighted capacity
-  D  results_R5_D_forest_sensitivity_TEST  forest: uniform + GuptaA_2019 & HanniganGD_2017 (grey)
+  A  results_R5_A_violin              CRC vs control capacity by cohort (cohort colour + CRC hatch + points)
+  B  results_R5_B_forest_primary      forest: Cliff's delta, 9 primary cohorts, uniform capacity
+  C  results_R5_C_forest_reweighted   forest: same, efficiency-class-reweighted capacity
+  D  results_R5_D_forest_sensitivity  forest: uniform + GuptaA_2019 & HanniganGD_2017 (grey)
 
 Mirrors python/fig5_panels.py (the canonical Fig 4 producer; legacy name = one higher than the
-manuscript figure after the old Fig 3 was dropped). Edit STYLE, run, view the *_TEST files, then port
+manuscript figure after the old Fig 3 was dropped). Edit STYLE, run, view the * files, then port
 your tweaks back into fig5_panels.py.
 
 Bootstrap stats are CACHED to data/processed/flux/r5_forest_*.parquet, so panel B/C/D STYLE tweaks are
@@ -166,8 +166,8 @@ def draw_forest(df, cohort_order, fname, title):
     ax.set_xlabel("Cliff's δ   (← CRC higher    |    control higher →)")
     if SHOW_TITLE:
         ax.set_title(title, fontsize=10)
-    plt.tight_layout(); plt.savefig(f"{fname}_TEST.{FMT}", dpi=DPI); plt.close()
-    print(f"  {fname}_TEST.{FMT}  pooled δ={pr.delta:.3f} [{pr.lo:.3f},{pr.hi:.3f}]")
+    plt.tight_layout(); plt.savefig(f"{fname}.{FMT}", dpi=DPI); plt.close()
+    print(f"  {fname}.{FMT}  pooled δ={pr.delta:.3f} [{pr.lo:.3f},{pr.hi:.3f}]")
 
 def draw_violin(fname):
     sub = cap[cap.cohort.isin(PRIMARY) & cap.study_condition.isin(["CRC", "control"])].copy()
@@ -203,8 +203,8 @@ def draw_violin(fname):
     ax.legend(handles=[Patch(facecolor="0.8", edgecolor=VIOLIN_EDGE, label="control"),
                        Patch(facecolor="0.8", edgecolor=VIOLIN_EDGE, hatch=HATCH, label="CRC")],
               title="", loc="upper left", fontsize=9, frameon=True)
-    plt.tight_layout(); plt.savefig(f"{fname}_TEST.{FMT}", dpi=DPI); plt.close()
-    print(f"  {fname}_TEST.{FMT}  (violin, n={len(sub)})")
+    plt.tight_layout(); plt.savefig(f"{fname}.{FMT}", dpi=DPI); plt.close()
+    print(f"  {fname}.{FMT}  (violin, n={len(sub)})")
 
 if __name__ == "__main__":
     os.makedirs(FIGDIR, exist_ok=True)

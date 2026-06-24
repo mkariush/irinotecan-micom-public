@@ -6,7 +6,7 @@ Panel B (local-peak sensitivity): % capacity-limited vs local-peak/whole-gut-ave
 
 Uses the REAL 1,509-community relative-capacity DISTRIBUTION (shape fixed by data; only the absolute
 scale is swept). realized_i = min(D, capacity_i); composition matters where capacity_i < D.
-Mirrors 25_phase_diagram.py (the combined canonical). Writes *_TEST files. Edit STYLE, run, view.
+Mirrors 25_phase_diagram.py (the combined canonical). Writes * files. Edit STYLE, run, view.
 
     python python/fig7_playground.py
 """
@@ -37,8 +37,8 @@ SHOW_TITLE = False         # titles moved to the figure caption (publication sty
 A_TITLE    = ("(a) Regime map: when does composition control reactivation?\n"
              "blue = host-gated (delivery-limited) | red = microbiome-controlled")
 B_TITLE    = "(b) How large a LOCAL PEAK before composition matters?\n(central Guthrie capacity)"
-OUT_A      = "data/processed/figures/results_R7_A_regime_TEST"
-OUT_B      = "data/processed/figures/results_R7_B_localpeak_TEST"
+OUT_A      = "data/processed/figures/results_R7_A_regime"
+OUT_B      = "data/processed/figures/results_R7_B_localpeak"
 # -------------------------------------------------
 
 PRIMARY = ["ZellerG_2014", "YuJ_2015", "FengQ_2015", "ThomasAM_2018a", "ThomasAM_2018b",

@@ -35,7 +35,7 @@ TITLE           = "Capacity reduces to summed β-glucuronidase-carrier abundance
 XLABEL          = "summed GUS-carrier abundance"
 YLABEL          = "SN-38 reactivation capacity (relative units)"
 THEME_CTX       = "paper"
-OUT             = "data/processed/figures/results_R2_abundance_TEST.png"   # _TEST, not the real one
+OUT             = "data/processed/figures/results_R2_abundance.svg"
 DPI             = 600
 # -------------------------------------------------
 

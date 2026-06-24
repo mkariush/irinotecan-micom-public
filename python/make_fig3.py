@@ -1,6 +1,6 @@
 """Fast Fig 3 (driver taxa, R4) playground -- iterate on STYLE without touching fig3_panels.py.
 
-Renders Panel A (drivers stacked by cohort) and/or Panel B (uniform vs class-weighted) to *_TEST files.
+Renders Panel A (drivers stacked by cohort) and/or Panel B (uniform vs class-weighted) to * files.
 Panel A supports NORMALIZE: absolute stacked flux (False) or proportional 100% composition (True, which
 removes the cohort-sample-count effect). Edit the STYLE block, run, look at the PNGs.
 
@@ -38,9 +38,9 @@ A_LEGEND_LOC = "lower right"
 B_LEGEND_LOC = "lower right"
 FMT        = "svg"          # playground default; fig3_panels.py emits svg
 DPI        = 600
-OUT_A      = "data/processed/figures/results_R4_A_drivers_TEST"
-OUT_B      = "data/processed/figures/results_R4_B_reweight_TEST"
-OUT_C      = "data/processed/figures/results_R4_C_persample_TEST"
+OUT_A      = "data/processed/figures/results_R4_A_drivers"
+OUT_B      = "data/processed/figures/results_R4_B_reweight"
+OUT_C      = "data/processed/figures/results_R4_C_persample"
 # -------------------------------------------------
 
 FLUX = "data/processed/flux"

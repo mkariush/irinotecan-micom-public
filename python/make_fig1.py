@@ -26,7 +26,7 @@ SHOW_TITLE   = False
 TITLE        = "Predicted SN-38 reactivation capacity across cohorts"
 YLABEL       = "SN-38 reactivation capacity (relative units)"
 THEME_CTX    = "paper"       # "notebook" | "talk" | "paper" | "poster"
-OUT          = "data/processed/figures/results_R1_by_cohort_TEST.png"   # note: _TEST, not the real one
+OUT          = "data/processed/figures/results_R1_by_cohort.svg"
 DPI          = 600
 # -------------------------------------------------
 

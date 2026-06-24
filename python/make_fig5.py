@@ -1,7 +1,7 @@
 """Fast Fig 6 (potential vs realized, R6) playground -- TWO SEPARATE panels, viridis 17b style.
 
 Renders Panel A (per-community collapse, coloured by saturating capacity) and Panel B (CV% +
-correlation vs supply) to SEPARATE *_TEST files, for external (Inkscape) composition. Same design as
+correlation vs supply) to SEPARATE * files, for external (Inkscape) composition. Same design as
 17b_q1_plot.py (the combined version), just split. Edit the STYLE block, run, view the PNGs.
 
 Note on Panel B: at the limiting (low-supply) end, realized reactivation is ~constant across samples,
@@ -35,8 +35,8 @@ CORR_METHOD = "pearson"      # "pearson" (matches 17b np.corrcoef) | "spearman"
 CORR_YLIM   = (-0.1, 1.05)   # show the small negative dip honestly; set (0, 1.05) to floor at 0
 CV_COLOR    = "tab:red"
 CORR_COLOR  = "tab:blue"
-OUT_A       = "data/processed/figures/results_R6_A_collapse_TEST"
-OUT_B       = "data/processed/figures/results_R6_B_metrics_TEST"
+OUT_A       = "data/processed/figures/results_R6_A_collapse"
+OUT_B       = "data/processed/figures/results_R6_B_metrics"
 # -------------------------------------------------
 
 df = pd.read_parquet("data/processed/flux/substrate_sweep_45.parquet")
