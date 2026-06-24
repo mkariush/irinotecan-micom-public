@@ -49,18 +49,7 @@ OUT_C      = "data/processed/figures/results_R4_C_persample"
 FLUX = "data/processed/flux"
 PRIMARY = ["ZellerG_2014", "YuJ_2015", "FengQ_2015", "ThomasAM_2018a", "ThomasAM_2018b",
            "WirbelJ_2018", "VogtmannE_2016", "YachidaS_2019", "ThomasAM_2019_c"]
-CLASS_EFF = {"L1": 1.0, "NL": 1.0, "mL1": 0.4, "L2": 0.4, "mL2": 0.05, "NC": 0.0}
-SPECIES_CLASS = {
-    "Faecalibacterium_prausnitzii": "L1", "Eubacterium_eligens": "L1", "Escherichia_coli": "L1",
-    "Clostridium_perfringens": "L1", "Bacteroides_uniformis": "NL", "Bacteroides_ovatus": "NL",
-    "Bacteroides_dorei": "NL", "Bacteroides_massiliensis": "NL", "Parabacteroides_merdae": "NL",
-    "Bacteroides_vulgatus": "mL1", "Bacteroides_fragilis": "mL1", "Ruminococcus_gnavus": "mL1",
-    "Bacteroides_cellulosilyticus": "L2", "Lactobacillus_rhamnosus": "L1", "Prevotella_copri": "L1",
-}
-GENUS_DEFAULT = {"Bacteroides": 0.7, "Parabacteroides": 0.7, "Escherichia": 1.0,
-                 "Faecalibacterium": 1.0, "Eubacterium": 0.7, "Clostridium": 0.7,
-                 "Roseburia": 0.5, "Ruminococcus": 0.4, "Prevotella": 0.5, "Paraprevotella": 0.5}
-def eff(t): return CLASS_EFF[SPECIES_CLASS[t]] if t in SPECIES_CLASS else GENUS_DEFAULT.get(t.split("_")[0], 0.5)
+from gus_efficiency import CLASS_EFF, SPECIES_CLASS, GENUS_DEFAULT, eff
 def cls(t): return SPECIES_CLASS.get(t, "?")
 
 con = pd.read_parquet(f"{FLUX}/full_taxa_contributions.parquet")

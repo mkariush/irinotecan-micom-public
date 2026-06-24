@@ -1,6 +1,6 @@
 """Supplementary Tables S3/S4: GUS loop-class efficiency scheme + per-taxon assignments.
 
-Generated DIRECTLY from the authoritative weighting dicts in fig5_panels.py
+Generated DIRECTLY from the authoritative weighting dicts in gus_efficiency.py
 (CLASS_EFF, SPECIES_CLASS, GENUS_DEFAULT) so the supplement can never drift from the code that
 produces Fig 4C. The empirical anchors (Pellock 2018 SN-38G kcat/Km) are documented in the
 'Empirical basis' column. Idempotent: re-running replaces any existing S3/S4 block.
@@ -14,7 +14,7 @@ import sys
 import pandas as pd
 
 sys.path.insert(0, os.path.dirname(__file__))
-from fig5_panels import CLASS_EFF, SPECIES_CLASS, GENUS_DEFAULT  # single source of truth
+from gus_efficiency import CLASS_EFF, SPECIES_CLASS, GENUS_DEFAULT  # single source of truth
 
 OUT_DIR   = "data/processed/tables"
 OUT_CSV3  = f"{OUT_DIR}/table_S3_class_efficiency.csv"
