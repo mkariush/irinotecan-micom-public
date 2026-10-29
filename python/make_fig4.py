@@ -34,7 +34,7 @@ PALETTE      = "tab10"         # MUST match Fig 1
 THEME_CTX    = "paper"
 SHOW_TITLE   = False            # forest panel titles; set False for caption-only (publication) style
 # panel A (violin)
-A_SIZE       = (9, 4.5)
+A_SIZE       = (9, 3.2)
 VIOLIN_ALPHA = 0.2
 VIOLIN_EDGE  = "0.25"
 VIOLIN_LW    = 0.8
@@ -46,7 +46,7 @@ POINT_EDGE   = "0.3"
 POINT_LW     = 0.2
 POINT_JITTER = 0.08
 # panels B/C/D (forest)
-FOREST_SIZE  = (4.3, 4)
+FOREST_SIZE  = (9, 2.4)
 XLIM         = (-0.85, 0.85)
 SENS_GREY    = {"GuptaA_2019": "0.55", "HanniganGD_2017": "0.72"}   # significance shown by asterisk on label only
 POOL_COLOR   = "navy"

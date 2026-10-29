@@ -1,6 +1,6 @@
-"""Supplementary Table S2: oxygen-independence of SN-38 reactivation capacity (45-sample subset).
+"""Supplementary Table S4: oxygen-independence of SN-38 reactivation capacity (45-sample subset).
 
-Reads o2_check.parquet (27_o2_check.py) and appends Table S2 to docs/supplementary_tables.md
+Reads o2_check.parquet (27_o2_check.py) and appends Table S4 to docs/supplementary_tables.md
 (idempotent: replaces any existing S2 section) + writes the CSV. Run AFTER 26 (S1) and 27 (o2 check).
 
     python python/28_table_s2_o2.py
@@ -10,9 +10,9 @@ import pandas as pd
 
 SRC     = "data/processed/flux/o2_check.parquet"
 OUT_DIR = "data/processed/tables"
-OUT_CSV = f"{OUT_DIR}/table_S2_o2.csv"
+OUT_CSV = f"{OUT_DIR}/table_S4_o2.csv"
 OUT_MD  = "docs/supplementary_tables.md"
-MARKER  = "## Table S2."
+MARKER  = "## Table S4."
 
 PRIMARY = ["ZellerG_2014", "YuJ_2015", "FengQ_2015", "ThomasAM_2018a", "ThomasAM_2018b",
            "WirbelJ_2018", "VogtmannE_2016", "YachidaS_2019", "ThomasAM_2019_c"]
@@ -49,10 +49,10 @@ if os.path.exists(OUT_MD):
     prev = open(OUT_MD, encoding="utf-8").read()
 head = prev.split(MARKER)[0].rstrip() if MARKER in prev else prev.rstrip()
 if not head:
-    head = "# Supplementary tables"          # safety if S1 not present yet
+    head = "# Supplementary tables"          # safety if S1-S3 not present yet
 with open(OUT_MD, "w", encoding="utf-8") as f:
     f.write(head + "\n\n" + section)
 
 print(f"n={n} | O2-invariant: {n_eq}/{n} | max|diff|={df['abs_diff'].max():.3g} | "
       f"max rel_diff={df['rel_diff'].max():.3g}")
-print(f"saved -> {OUT_CSV}  and appended Table S2 to {OUT_MD}")
+print(f"saved -> {OUT_CSV}  and appended Table S4 to {OUT_MD}")

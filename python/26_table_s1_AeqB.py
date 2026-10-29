@@ -1,4 +1,8 @@
-"""Supplementary Table S1: Arm A == Arm B reactivation capacity on the 45-sample validation subset.
+"""Supplementary Table S3: Arm A == Arm B reactivation capacity on the 45-sample validation subset.
+
+NUMBERING: S3, not S1. The submitted supplement (docs/mSystems/Table_S*.xlsx) orders the tables
+S1/S2 = enzyme-class efficiency, S3 = A==B, S4 = oxygen, S5 = CRC overlap. Build order is therefore
+29 -> 26 -> 28 -> 30 -> 34, and 29 writes the file header.
 
 Since A==B is exact, it gets no main figure (a plot would be trivially flat); instead we present the
 per-sample Arm A / Arm B values as a supplementary table. Reads AeqB_validation.parquet (09).
@@ -11,7 +15,8 @@ import pandas as pd
 
 SRC      = "data/processed/flux/AeqB_validation.parquet"
 OUT_DIR  = "data/processed/tables"
-OUT_CSV  = f"{OUT_DIR}/table_S1_AeqB.csv"
+OUT_CSV  = f"{OUT_DIR}/table_S3_AeqB.csv"
+MARKER   = "## Table S3."
 OUT_MD   = "docs/supplementary_tables.md"
 
 PRIMARY = ["ZellerG_2014", "YuJ_2015", "FengQ_2015", "ThomasAM_2018a", "ThomasAM_2018b",
@@ -38,8 +43,7 @@ tab.to_csv(OUT_CSV, index=False)
 # markdown rendering
 n = len(tab)
 n_agree = int(df["A_eq_B"].sum())
-hdr = ("# Supplementary tables\n\n"
-       "## Table S1. Growth-constrained (Arm B) versus unconstrained (Arm A) SN-38 reactivation capacity\n\n"
+hdr = ("## Table S3. Growth-constrained (Arm B) versus unconstrained (Arm A) SN-38 reactivation capacity\n\n"
        f"Per-sample reactivation capacity (relative units) for the stratified {n}-sample validation "
        "subset (five per primary cohort). **Arm A** is the unconstrained maximum SN-38 secretion; "
        "**Arm B** is the same maximization subject to the community retaining ≥95% of its "
@@ -49,9 +53,13 @@ hdr = ("# Supplementary tables\n\n"
        "growth- nor oxygen-limited under saturating substrate (Results, R3). Capacity is in relative "
        "units (uniform AGORA2 bound, not a measured Vmax; Methods).\n\n")
 
-md = hdr + tab.to_markdown(index=False)
+section = hdr + tab.to_markdown(index=False) + "\n"
+prev = open(OUT_MD, encoding="utf-8").read() if os.path.exists(OUT_MD) else ""
+head = prev.split(MARKER)[0].rstrip() if MARKER in prev else prev.rstrip()
+if not head:
+    head = "# Supplementary tables"   # safety if 29 (S1/S2) has not run yet
 with open(OUT_MD, "w", encoding="utf-8") as f:
-    f.write(md + "\n")
+    f.write(head + "\n\n" + section)
 
 print(f"n={n} | A==B agree: {n_agree}/{n} | max|A-B|={df['abs_diff'].max():.3g} | "
       f"max rel_diff={df['rel_diff'].max():.3g}")

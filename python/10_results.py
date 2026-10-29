@@ -29,6 +29,17 @@ os.makedirs(FIG, exist_ok=True)
 PRIMARY_COHORTS = ["ZellerG_2014", "YuJ_2015", "FengQ_2015", "ThomasAM_2018a", "ThomasAM_2018b",
                    "WirbelJ_2018", "VogtmannE_2016", "YachidaS_2019", "ThomasAM_2019_c"]
 
+# RENORMALIZATION SENSITIVITY (mSystems R1 major comment 1, added 2026-09-02).
+# Reviewer 1 noted that renormalizing to 1 after dropping taxa inflates the survivors. The
+# dominant renormalization is not the abundance cutoff (median 0.002% of mass) but AGORA2
+# model matching (median 7.2%, p95 25.7%). Setting SENS_COVERAGE=1 rescales each sample's
+# capacity onto the TOTAL-community basis (x the AGORA2-matched abundance fraction), i.e.
+# undoes the build-time renormalization entirely, and writes to *_covsens outputs so the
+# canonical results are never overwritten. Default (unset) reproduces the published run byte
+# for byte. Coverage table: python -> data/processed/agora2_coverage.csv.
+SENS = os.environ.get("SENS_COVERAGE") == "1"
+SUFFIX = "_covsens" if SENS else ""
+
 cap_all = pd.read_parquet(f"{FLUX}/full_capacity.parquet")
 con_all = pd.read_parquet(f"{FLUX}/full_taxa_contributions.parquet")
 
@@ -37,6 +48,16 @@ tax = pd.read_parquet("data/processed/taxonomy_micom.parquet")
 smeta = (tax[["sample_id", "cohort", "study_condition", "cohort_set"]]
          .drop_duplicates("sample_id"))
 cap_all = cap_all.merge(smeta, on="sample_id", how="left")
+
+if SENS:
+    cov = pd.read_csv("data/processed/agora2_coverage.csv")[["sample_id", "cov_abund"]]
+    n_before = len(cap_all)
+    cap_all = cap_all.merge(cov, on="sample_id", how="left")
+    missing = cap_all["cov_abund"].isna().sum()
+    cap_all["sn38_capacity"] = cap_all["sn38_capacity"] * cap_all["cov_abund"]
+    print(f"[SENS_COVERAGE] capacity rescaled to total-community basis "
+          f"(x AGORA2-matched fraction); {n_before} samples, {missing} without coverage "
+          f"(dropped from stats as NaN). Outputs suffixed '{SUFFIX}'.\n")
 
 # split: primary drives R1-R6; sensitivity (shallow cohorts) reported on its own
 cap = cap_all[cap_all.cohort.isin(PRIMARY_COHORTS)].copy()
@@ -120,14 +141,14 @@ sns.stripplot(data=cap, x="cohort", y="sn38_capacity", order=order, hue="cohort"
               edgecolor="0.3", linewidth=0.2, legend=False)
 plt.ylabel("SN-38 reactivation capacity (relative units)"); plt.xlabel(""); plt.xticks(rotation=30, ha="right")
 plt.tight_layout()
-plt.savefig(f"{FIG}/results_R1_by_cohort.png", dpi=DPI); plt.close()
+plt.savefig(f"{FIG}/results_R1_by_cohort{SUFFIX}.png", dpi=DPI); plt.close()
 
 plt.figure(figsize=(8, 7))
 sns.regplot(data=m, x="carrier_abundance", y="sn38_capacity",
             scatter_kws=dict(s=15, alpha=0.4), line_kws=dict(color="red"), ci=None)
 plt.xlabel("summed GUS-carrier abundance"); plt.ylabel("SN-38 capacity")
 plt.title(f"R2: slope={slope:.0f}, r^2={corr**2:.3f}"); plt.tight_layout()
-plt.savefig(f"{FIG}/results_R2_abundance.png", dpi=200); plt.close()
+plt.savefig(f"{FIG}/results_R2_abundance{SUFFIX}.png", dpi=200); plt.close()
 
 # R4 driver-taxa figure moved to python/fig3_panels.py (2-panel: stacked-by-cohort + reweighting).
 # This script still prints the R4 ranking above; it no longer renders the old single-bar figure.
@@ -158,7 +179,7 @@ if len(sub):
     legend_elems = [Patch(facecolor="0.8", edgecolor="0.25", label="control"),
                     Patch(facecolor="0.8", edgecolor="0.25", hatch="/////", label="CRC")]
     ax.legend(handles=legend_elems, title="", loc="upper left", fontsize=9, frameon=True)
-    plt.tight_layout(); plt.savefig(f"{FIG}/results_R5_crc_vs_control.png", dpi=DPI); plt.close()
+    plt.tight_layout(); plt.savefig(f"{FIG}/results_R5_crc_vs_control{SUFFIX}.png", dpi=DPI); plt.close()
 
 # ---------- depth-sensitivity cohorts (Gupta, Hannigan): reported, NOT in primary ----------
 if len(cap_sens):
@@ -169,9 +190,9 @@ if len(cap_sens):
     print("compare medians to primary cohorts above; low capacity here may be depth-driven.")
 
 # save summary
-drv.to_csv(f"{FLUX}/results_driver_taxa.csv", index=False)
-if len(meta_df): meta_df.to_csv(f"{FLUX}/results_crc_meta.csv", index=False)
+drv.to_csv(f"{FLUX}/results_driver_taxa{SUFFIX}.csv", index=False)
+if len(meta_df): meta_df.to_csv(f"{FLUX}/results_crc_meta{SUFFIX}.csv", index=False)
 cap_all[["sample_id", "cohort", "cohort_set", "study_condition", "sn38_capacity"]].to_csv(
-    f"{FLUX}/results_capacity_by_sample.csv", index=False)
+    f"{FLUX}/results_capacity_by_sample{SUFFIX}.csv", index=False)
 print(f"\nPRIMARY n={len(cap)} ({cap.cohort.nunique()} cohorts). "
       f"Figures -> {FIG}/results_*.png ; tables -> {FLUX}/results_*.csv")
